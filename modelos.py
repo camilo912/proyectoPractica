@@ -49,6 +49,9 @@ class Model_predictor():
 
 		return preds
 
+	def save(self):
+		self.model.save('model_predictor.h5')
+
 class Model_decisor():
 	def __init__(self, lr, n_features, scaler, n_classes, gamma):
 		from keras.models import Sequential
@@ -72,13 +75,15 @@ class Model_decisor():
 		self.opt = Adam(lr=lr, decay=0.0)
 
 		# Compile model
-		self.model.compile(loss='categorical_crossentropy', optimizer=self.opt, metrics=['accuracy'])
-		# self.model.compile(loss='mse', optimizer=self.opt, metrics=['accuracy'])
+		# self.model.compile(loss='categorical_crossentropy', optimizer=self.opt, metrics=['accuracy'])
+		self.model.compile(loss='mse', optimizer=self.opt, metrics=['accuracy'])
 
-	def train(self, train_X, val_X, train_y, val_y, batch_size, n_epochs, variations):
+	def train(self, train_X, val_X, train_y, val_y, batch_size, n_epochs, variations, observations):
 		import random
 		import numpy as np
-		# self.model.train(train_X, train_y, epochs=n_epochs, batch_size=batch_size, validation_data=(val_X, val_y), verbose=0, shuffle=True)
+		from keras.utils import to_categorical
+
+		self.history = []
 		
 		for epoch in range(n_epochs):
 			batch_idxs = random.sample(set(np.arange(len(train_X))), batch_size)
@@ -88,17 +93,27 @@ class Model_decisor():
 			for i, idx in enumerate(batch_idxs):
 				state = train_X[idx].reshape(1, -1)
 				#action = np.argmax(self.model.predict(np.expand_dims(state, axis=0)))
-				action = 1 if(state[-1, -1] > train_y[idx]) else 0
+				# action = 1 if(state[-1, -1] > train_y[idx]) else 0
+				action = 1 if(state[-1, -1] > state[-1, -2]) else 0
 				reward = variations[idx] if action else -variations[idx]
-				state_new = np.append(state[:, 1:], train_y[idx].reshape(1, -1), axis=1)
+				#print(state)
+				#print(train_y[idx])
+				#print(reward)
+				#raise Exception('debug')
+				# state_new = np.append(state[:, 1:], train_y[idx].reshape(1, -1), axis=1)
+				state_new = np.append(state[:, 1:], observations[idx].reshape(1, -1), axis=1)
+				#print(state_new)
 
 				inputs[i] = np.expand_dims(state, axis=0)
 				targets[i] = self.model.predict(np.expand_dims(state, axis=0))
 				Q_sa = self.model.predict(np.expand_dims(state_new, axis=0))
 
 				targets[i, action] = reward + self.gamma * np.max(Q_sa)
+				#print(targets)
 
-				self.model.train_on_batch(np.expand_dims(inputs, axis=1), targets)
+			self.model.train_on_batch(np.expand_dims(inputs, axis=1), targets)
+
+			self.history.append(self.model.evaluate(np.expand_dims(val_X, axis=1), to_categorical(val_y), verbose=0)[1])
 
 
 	def eval(self, test_X, test_y):
@@ -118,10 +133,7 @@ class Model_decisor():
 		# inverse the scaling
 		# test_y_inv = utils.inverse_transform(self.scaler, test_y, self.n_features)
 
-		# rmse = math.sqrt(mean_squared_error(test_y_inv, preds_inv))
-
-
-		return acc, preds, test_y
+		return acc, preds, test_y, self.history
 
 	def predict(self, values):
 		import numpy as np

@@ -1,1 +1,4 @@
 *.pyc
+*gbm_trials*.csv
+*best*.txt
+*.h5

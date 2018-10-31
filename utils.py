@@ -58,38 +58,63 @@ def split_data(values, n_lags, n_features):
 
 	return train_X, val_X, test_X, train_y, val_y, test_y
 
-def objective(params, scaled, n_features, scaler):
+def objective(params, scaled, n_features, scaler, id_model, train_X=None, val_X=None, test_X=None, train_y=None, val_y=None, test_y=None, n_classes=2, variations=None):
 	from hyperopt import STATUS_OK
 
 	global ITERATION
 	ITERATION += 1
 	print(ITERATION, params)
 
-	# Make sure parameters that need to be integers are integers
-	for parameter_name in ['n_hidden', 'batch_size', 'n_epochs', 'n_lags']:
-		params[parameter_name] = int(params[parameter_name])
+	if(id_model == 0):
+		# Make sure parameters that need to be integers are integers
+		for parameter_name in ['n_hidden', 'batch_size', 'n_epochs', 'n_lags']:
+			params[parameter_name] = int(params[parameter_name])
 
-	# Make sure parameters that need to be float are float
-	for parameter_name in ['lr']:
-		params[parameter_name] = float(params[parameter_name])
-	
-	out_file = 'trials/gbm_trials.csv'
+		# Make sure parameters that need to be float are float
+		for parameter_name in ['lr']:
+			params[parameter_name] = float(params[parameter_name])
+		
+		out_file = 'trials/gbm_trials_predictor.csv'
 
-	# hyper parameters
-	batch_size = params['batch_size']
-	lr = params['lr']
-	n_epochs = params['n_epochs']
-	n_hidden = params['n_hidden']
-	n_lags = params['n_lags']
+		# hyper parameters
+		batch_size = params['batch_size']
+		lr = params['lr']
+		n_epochs = params['n_epochs']
+		n_hidden = params['n_hidden']
+		n_lags = params['n_lags']
 
 
-	start = timer()
+		start = timer()
 
-	train_X, val_X, test_X, train_y, val_y, test_y = split_data(scaled, n_lags, n_features)
+		train_X, val_X, test_X, train_y, val_y, test_y = split_data(scaled, n_lags, n_features)
 
-	model = modelos.Model_predictor(lr, n_hidden, n_lags, n_features, scaler)
-	model.train(train_X, val_X, train_y, val_y, batch_size, n_epochs)
-	rmse, _, _ = model.eval(test_X, test_y)
+		model = modelos.Model_predictor(lr, n_hidden, n_lags, n_features, scaler)
+		model.train(train_X, val_X, train_y, val_y, batch_size, n_epochs)
+		rmse, _, _ = model.eval(test_X, test_y)
+	elif(id_model == 1):
+		# Make sure parameters that need to be integers are integers
+		for parameter_name in ['batch_size', 'n_epochs']:
+			params[parameter_name] = int(params[parameter_name])
+
+		# Make sure parameters that need to be float are float
+		for parameter_name in ['gamma', 'lr']:
+			params[parameter_name] = float(params[parameter_name])
+		
+		out_file = 'trials/gbm_trials_decisor.csv'
+
+		# hyper parameters
+		batch_size = params['batch_size']
+		gamma = params['gamma']
+		lr = params['lr']
+		n_epochs = params['n_epochs']
+
+
+		start = timer()
+
+		model = modelos.Model_decisor(lr, n_features, scaler, n_classes, gamma)
+		model.train(train_X, val_X, train_y, val_y, batch_size, n_epochs, variations)
+		acc, _, _ = model.eval(test_X, test_y)
+		rmse = 1 - acc # because here the error is inversely proportional to acc
 
 	run_time = timer() - start
 
@@ -104,7 +129,7 @@ def objective(params, scaled, n_features, scaler):
 	# Dictionary with information for evaluation
 	return {'loss': rmse, 'params': params, 'iteration': ITERATION, 'train_time': run_time, 'status': STATUS_OK}
 
-def bayes_optimization(MAX_EVALS, scaled, n_features, scaler):
+def bayes_optimization(MAX_EVALS, scaled, n_features, scaler, id_model, train_X=None, val_X=None, test_X=None, train_y=None, val_y=None, test_y=None, n_classes=2, variations=None):
 	from hyperopt import fmin
 	from hyperopt import tpe
 	from hyperopt import Trials
@@ -114,17 +139,26 @@ def bayes_optimization(MAX_EVALS, scaled, n_features, scaler):
 	ITERATION = 0
 
 	# space
-	space = {'batch_size': hp.quniform('batch_size', 2, 150, 1),
-			'lr': hp.uniform('lr', 0.00001, 1.0),
-			'n_epochs': hp.quniform('n_epochs', 5, 500, 1),
-			'n_hidden': hp.quniform('n_hidden', 5, 200, 1),
-			'n_lags': hp.quniform('n_lags', 2, 50, 1)}
+	if(id_model == 0):
+		out_file = 'trials/gbm_trials_predictor.csv'
+		best_file = 'trials/bests_predictor.txt'
+		space = {'batch_size': hp.quniform('batch_size', 2, 150, 1),
+				'lr': hp.uniform('lr', 0.00001, 1.0),
+				'n_epochs': hp.quniform('n_epochs', 5, 500, 1),
+				'n_hidden': hp.quniform('n_hidden', 5, 200, 1),
+				'n_lags': hp.quniform('n_lags', 2, 50, 1)}
+	elif(id_model == 1):
+		out_file = 'trials/gbm_trials_decisor.csv'
+		best_file = 'trials/bests_decisor.txt'
+		space = {'batch_size': hp.quniform('batch_size', 2, 150, 1),
+				'gamma': hp.uniform('gamma', 0.1, 0.9),
+				'lr': hp.uniform('lr', 0.00001, 1.0),
+				'n_epochs': hp.quniform('n_epochs', 5, 500, 1)}
 
 	# Keep track of results
 	bayes_trials = Trials()
 
 	# File to save first results
-	out_file = 'trials/gbm_trials.csv'
 	of_connection = open(out_file, 'w')
 	writer = csv.writer(of_connection)
 
@@ -133,13 +167,16 @@ def bayes_optimization(MAX_EVALS, scaled, n_features, scaler):
 	of_connection.close()
 
 	# Run optimization
-	best = fmin(fn = lambda x: objective(x, scaled, n_features, scaler), space = space, algo = tpe.suggest, max_evals = MAX_EVALS, trials = bayes_trials, rstate = np.random.RandomState(50))
+	best = fmin(fn = lambda x: objective(x, scaled, n_features, scaler, id_model, train_X, val_X, test_X, train_y, val_y, test_y, n_classes, variations), space = space, algo = tpe.suggest, max_evals = MAX_EVALS, trials = bayes_trials, rstate = np.random.RandomState(50))
 
 	# store best results
-	of_connection = open('trials/bests.txt', 'a')
+	of_connection = open(best_file, 'a')
 	writer = csv.writer(of_connection)
 	bayes_trials_results = sorted(bayes_trials.results, key = lambda x: x['loss'])
-	writer.writerow([bayes_trials_results[0]['loss'], bayes_trials_results[0]['params']['n_hidden'], bayes_trials_results[0]['params']['batch_size'], bayes_trials_results[0]['params']['n_epochs'], bayes_trials_results[0]['params']['lr'], MAX_EVALS])
+	if(id_model == 0):
+		writer.writerow([bayes_trials_results[0]['loss'], bayes_trials_results[0]['params']['batch_size'], bayes_trials_results[0]['params']['lr'], bayes_trials_results[0]['params']['n_epochs'], bayes_trials_results[0]['params']['n_hidden'], bayes_trials_results[0]['n_lags'], MAX_EVALS])
+	elif(id_model == 1):
+		writer.writerow([bayes_trials_results[0]['loss'], bayes_trials_results[0]['params']['batch_size'], bayes_trials_results[0]['params']['gamma'], bayes_trials_results[0]['params']['lr'], bayes_trials_results[0]['params']['n_epochs'], MAX_EVALS])
 	of_connection.close()
 
 	return best
