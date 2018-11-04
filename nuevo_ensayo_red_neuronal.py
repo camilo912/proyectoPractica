@@ -13,12 +13,15 @@ def execute_model(scaled, n_features, scaler, batch_size, lambda_term, loss, lr,
 	from keras.models import Sequential
 	from keras.layers import LSTM, Dense
 	from keras import regularizers
+	from keras.optimizers import Adam
 
 	model = Sequential()
 	model.add(LSTM(n_hidden, input_shape=(n_lags, n_features)))
 	model.add(Dense(1, activation='sigmoid', kernel_regularizer=regularizers.l2(lambda_term)))
 
-	model.compile(optimizer='adam', loss=loss)
+	opt = Adam(lr=lr)
+
+	model.compile(optimizer=opt, loss=loss)
 
 	history = model.fit(train_X, train_y, validation_data=(val_X, val_y), verbose=0, batch_size=batch_size, epochs=n_epochs)
 
@@ -103,9 +106,9 @@ def bayes_optimization(max_evals, scaled, n_features, scaler, losses):
 
 	# space
 	space = {'batch_size': hp.quniform('batch_size', 1, 500, 1),
-			'lambda_term': hp.uniform('lambda_term', 0.001, 0.5),
+			'lambda_term': hp.uniform('lambda_term', 0.001, 0.01),
 			'loss_idx': hp.quniform('loss_idx', 0, 1, 1),
-			'lr': hp.uniform('lr', 0.001, 1.0),
+			'lr': hp.uniform('lr', 0.001, 0.05),
 			'n_epochs': hp.quniform('n_epochs', 50, 150, 1),
 			'n_hidden': hp.quniform('n_hidden', 5, 500, 1),
 			'n_lags': hp.quniform('n_lags', 2, 30, 1)}
@@ -141,17 +144,17 @@ def run(data):
 	losses = ['mse', 'binary_crossentropy']
 	
 	# hyper parameters
-	batch_size = 100
-	lambda_term = 0.01
+	batch_size = 402
+	lambda_term = 0.018932910620644897
 	loss_idx = 0
-	lr = 1e-3
-	n_epochs = 300
-	n_hidden = 500
-	n_lags = 10
+	lr = 0.05
+	n_epochs = 139
+	n_hidden = 183
+	n_lags = 3
 
-	max_evals = 100
-	best = bayes_optimization(max_evals, scaled, n_features, scaler, losses)
-	batch_size, lambda_term, loss_idx, lr, n_epochs, n_hidden, n_lags  = int(best['batch_size']), best['lambda_term'], int(best['loss_idx']), best['lr'], int(best['n_epochs']), int(best['n_hidden']), int(best['n_lags'])
+	#max_evals = 100
+	#best = bayes_optimization(max_evals, scaled, n_features, scaler, losses)
+	#batch_size, lambda_term, loss_idx, lr, n_epochs, n_hidden, n_lags  = int(best['batch_size']), best['lambda_term'], int(best['loss_idx']), best['lr'], int(best['n_epochs']), int(best['n_hidden']), int(best['n_lags'])
 
 	execute_model(scaled, n_features, scaler, batch_size, lambda_term, losses[loss_idx], lr, n_epochs, n_hidden, n_lags, 1)
 

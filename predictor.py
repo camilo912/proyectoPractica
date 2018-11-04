@@ -34,7 +34,7 @@ class Predictor():
 		self.models = []
 		#self.models.append(train(build_expert(input_shape, 100, 1, optimizer, loss), train_X, train_y, val_X, val_y, 32, 120, verbose))
 		#self.models.append(train(build_expert(input_shape, 200, 1, optimizer, loss), train_X, train_y, val_X, val_y, 32, 120, verbose))
-		self.models.append(train(build_expert(input_shape, 300, 1, optimizer, loss), train_X, train_y, val_X, val_y, 32, 120, verbose))
+		self.models.append(train(build_expert(input_shape, 183, 1, optimizer, loss), train_X, train_y, val_X, val_y, 32, 120, verbose))
 		self.models.append(train(build_expert(input_shape, 400, 1, optimizer, loss), train_X, train_y, val_X, val_y, 32, 120, verbose))
 		#self.models.append(train(build_expert(input_shape, 500, 1, optimizer, loss), train_X, train_y, val_X, val_y, 32, 120, verbose))
 		#self.models.append(train(build_expert(input_shape, 100, 2, optimizer, loss), train_X, train_y, val_X, val_y, 32, 120, verbose))
