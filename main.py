@@ -2,9 +2,11 @@ import numpy as np
 import pandas as pd
 import modelos
 import utils
+import neuralBandit
 
 from sklearn.preprocessing import MinMaxScaler
 from matplotlib import pyplot as plt
+import seaborn as sns
 from timeit import default_timer as timer
 
 
@@ -21,10 +23,10 @@ if __name__ == '__main__':
 	n_hidden = 30
 	n_lags = 3
 
-	#best = utils.bayes_optimization(MAX_EVALS, scaled, n_features, scaler, 0)
+	#best = utils.bayes_optimization(MAX_EVALS, scaled, n_features, scaler)
 	#batch_size, lr, n_epochs, n_hidden, n_lags = int(best['batch_size']), best['lr'], int(best['n_epochs']), int(best['n_hidden']), int(best['n_lags'])
 
-	train_X, val_X, test_X, train_y, val_y, test_y = utils.split_data(scaled, n_lags, n_features)
+	# train_X, val_X, test_X, train_y, val_y, test_y = utils.split_data(scaled, n_lags, n_features)
 
 	# start = timer()
 
@@ -37,78 +39,114 @@ if __name__ == '__main__':
 
 	# run_time = timer() - start
 	
-	# # save the model
-	# model.save()
-	# del model
-
 	# # print results
 	# print('rmse: %f' % rmse, 'run_time: %f' % run_time)
 
-	# # plot results
-	# plt.plot(y_hat, label='predictions')
-	# plt.plot(y, label='observations')
-	# plt.suptitle('Predictions vs observations')
-	# plt.legend()
-	# plt.show()
+	# # # plot results
+	# # plt.plot(y_hat, label='predictions')
+	# # plt.plot(y, label='observations')
+	# # plt.suptitle('Predictions vs observations')
+	# # plt.legend()
+	# # plt.show()
 
-	# ########################################### Q-learning Model #################################################################
+	# # ########################################### Q-learning Model #################################################################
 
-	from keras.models import load_model
-
-	model = load_model('model_predictor.h5')
-
-	train_X_inv, val_X_inv, test_X_inv, train_y_inv, val_y_inv, test_y_inv = utils.split_data(df.values, n_lags, n_features)
+	# train_X_inv, val_X_inv, test_X_inv, train_y_inv, val_y_inv, test_y_inv = utils.split_data(df.values, n_lags, n_features)
 	
-	#train_X_inv = np.array([[scaler.inverse_transform(train_X[j, i, :].reshape(1, -1)).ravel() for i in range(n_lags)] for j in range(len(train_X))])
-	#val_X_inv = np.array([[scaler.inverse_transform(val_X[j, i, :].reshape(1, -1)).ravel() for i in range(n_lags)] for j in range(len(val_X))])
-	#test_X_inv = np.array([[scaler.inverse_transform(test_X[j, i, :].reshape(1, -1)).ravel() for i in range(n_lags)] for j in range(len(test_X))])
+	# variations = train_y_inv - train_X_inv[:, -1, 0]
+	# variations_val = val_y_inv - val_X_inv[:, -1, 0]
+	# variations_test = test_y_inv - test_X_inv[:, -1, 0]
+	
+	# train_X = np.append(train_X[:, :, 0], model.predict(train_X).reshape(-1, 1), axis=1)
+	# train_y = utils.to_one_hot((train_X[:, -2] < train_y).astype(np.int32))
+	# # train_y = np.array([variations.ravel()*-1, variations.ravel()]).T
 
-	# print(train_X[0])
-	# print(val_X.shape)
-	# print(test_X.shape)
+	# val_X = np.append(val_X[:, :, 0], model.predict(val_X).reshape(-1, 1), axis=1)
+	# val_y = utils.to_one_hot((val_X[:, -2] < val_y).astype(np.int32))
+	# # val_y = np.array([variations_val.ravel()*-1, variations_val.ravel()]).T
+	
+	# test_X = np.append(test_X[:, :, 0], model.predict(test_X).reshape(-1, 1), axis=1)
+	# test_y = utils.to_one_hot((test_X[:, -2] < test_y).astype(np.int32))
+	# # test_y = np.array([variations_test.ravel()*-1, variations_test.ravel()]).T
 
+	# # train_y, val_y, test_y = train_y.astype(np.int32), val_y.astype(np.int32), test_y.astype(np.int32)
 
+	# # print(train_X[:4])
+	# # print(train_y[:4])
+	# # print(train_X.shape)
+	# # print(train_y.shape)
 
-	train_X = np.append(train_X[:, :, 0], model.predict(train_X).reshape(-1, 1), axis=1)
-	observations = train_y
-	train_y = train_X[:, -2] < train_y
-	val_X = np.append(val_X[:, :, 0], model.predict(val_X).reshape(-1, 1), axis=1)
-	val_y = val_X[:, -2] < val_y
-	test_X = np.append(test_X[:, :, 0], model.predict(test_X).reshape(-1, 1), axis=1)
-	test_y = test_X[:, -2] < test_y
-	variations = train_y_inv - train_X_inv[:, -1, 0]
+	# # raise Exception('Debug')
 
-	train_y, val_y, test_y = train_y.astype(np.int32), val_y.astype(np.int32), test_y.astype(np.int32)
+	# n_classes = 2
 
-	# print(train_X[:4])
-	# print(train_y[:4])
-	# print(train_X.shape)
-	# print(train_y.shape)
+	# # hyper parameters
+	# #batch_size = 100
+	# #lr = 1
+	# #n_epochs = 1
+	# #gamma = 0.9
 
-	# raise Exception('Debug')
+	# # fit_models, arm_hist, true_reward_hist, regret_hist = neuralBandit.run_bandit_1(train_X, train_y, optimizer='adam', 
+	# # 																			loss='binary_crossentropy', 
+	# # 																			explore=.005, exp_annealing_rate=1)
+	train_X, val_X, test_X, train_y, val_y, test_y = utils.split_data(scaled, n_lags, n_features)
+	train_y = utils.to_one_hot((train_X[:, -1, 0] <= train_y).astype(np.int32))
+	val_y = utils.to_one_hot((val_X[:, -1, 0] <= val_y).astype(np.int32))
+	test_y = utils.to_one_hot((test_X[:, -1, 0] <= test_y).astype(np.int32))
+	#train_X = train_X[:, :, 0]
+	#val_X = val_X[:, :, 0]
+	#test_X = test_X[:, :, 0]
+	#train_X, val_X, test_X, _, _, _ = utils.split_data_without_lags(scaled, n_lags, n_features)
 
-	n_classes = 2
+	fit_models, arm_hist, true_reward_hist, regret_hist, weights, model_hist = neuralBandit.run_bandit_2(train_X, train_y,
+																				explore=0.1, exp_annealing_rate=0.99995, recurrent=True)
 
-	# hyper parameters
-	batch_size = 5
-	lr = 0.5
-	n_epochs = 2
-	gamma = 0.9
-	MAX_EVALS = 100
-
-	#best = utils.bayes_optimization(MAX_EVALS, scaled, n_features, scaler, 1, train_X=train_X, val_X=val_X, test_X=test_X, train_y=train_y, val_y=val_y, test_y=test_y, n_classes=n_classes, variations=variations)
-	#batch_size, lr, n_epochs, gamma = int(best['batch_size']), best['lr'], int(best['n_epochs']), best['gamma']
-
-	start = timer()
-	model2 = modelos.Model_decisor(lr, n_features, scaler, n_classes, gamma)
-	model2.train(train_X, val_X, train_y, val_y, batch_size, n_epochs, variations, observations)
-	# acc_val, y_hat_val, y_val = model2.eval(val_X, val_y)
-	acc, y_hat, y, history = model2.eval(test_X, test_y)
-
-	plt.plot(history)
+	plt.plot(np.cumsum(regret_hist))
+	plt.title('cumulative regret')
+	plt.xlabel('$t$')
+	plt.ylabel('regret')
 	plt.show()
 
-	run_time = timer() - start
+	print(pd.value_counts(true_reward_hist))
+	print(pd.value_counts(arm_hist))
 
-	# print results
-	print('acc: %f' % acc, 'run_time: %f' % run_time)
+	sns.barplot(pd.value_counts(arm_hist).index, pd.value_counts(arm_hist).values)
+	plt.title('chosen arm distribution')
+	plt.ylabel('count')
+	plt.xlabel('arm')
+	plt.show()
+
+	sns.barplot(pd.value_counts(true_reward_hist).index, pd.value_counts(true_reward_hist).values)
+	plt.title('true reward distribution')
+	plt.ylabel('reward')
+	plt.xlabel('arm')
+	plt.show()
+
+	sns.barplot(pd.value_counts(model_hist).index, pd.value_counts(model_hist).values)
+	plt.title('model selection distribution')
+	plt.ylabel('count')
+	plt.xlabel('model')
+	plt.show()
+
+	# start = timer()
+	# model2 = modelos.Model_decisor(lr, n_features, scaler, n_classes, gamma)
+	# model2.train(train_X, val_X, train_y, val_y, batch_size, n_epochs, variations)
+	# acc, y_hat, y = model2.eval(val_X, val_y)
+
+	# run_time = timer() - start
+	
+	# # print results
+	# print('acc: %f' % acc, 'run_time: %f' % run_time)
+
+	from sklearn.metrics import accuracy_score
+
+	print('\n\n train score: ', accuracy_score(arm_hist, true_reward_hist), end='\n\n')
+
+	preds_val = neuralBandit.predict_with_models(val_X, fit_models, weights)
+
+	print('\n\n val score: ', accuracy_score(preds_val, np.argmax(val_y, axis=1)), end='\n\n')
+
+	preds_test = neuralBandit.predict_with_models(test_X, fit_models, weights)
+
+	print('\n\n test score: ', accuracy_score(preds_test, np.argmax(test_y, axis=1)), end='\n\n')
+
