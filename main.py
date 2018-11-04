@@ -17,11 +17,11 @@ if __name__ == '__main__':
 	MAX_EVALS = 100
 
 	# hyper parameters
-	batch_size = 32
+	batch_size = 64
 	lr = 1e-3
-	n_epochs = 300
+	n_epochs = 150
 	n_hidden = 30
-	n_lags = 3
+	n_lags = 30
 
 	#best = utils.bayes_optimization(MAX_EVALS, scaled, n_features, scaler)
 	#batch_size, lr, n_epochs, n_hidden, n_lags = int(best['batch_size']), best['lr'], int(best['n_epochs']), int(best['n_hidden']), int(best['n_lags'])
@@ -90,16 +90,23 @@ if __name__ == '__main__':
 	# # 																			loss='binary_crossentropy', 
 	# # 																			explore=.005, exp_annealing_rate=1)
 	train_X, val_X, test_X, train_y, val_y, test_y = utils.split_data(scaled, n_lags, n_features)
-	train_y = utils.to_one_hot((train_X[:, -1, 0] <= train_y).astype(np.int32))
-	val_y = utils.to_one_hot((val_X[:, -1, 0] <= val_y).astype(np.int32))
-	test_y = utils.to_one_hot((test_X[:, -1, 0] <= test_y).astype(np.int32))
-	#train_X = train_X[:, :, 0]
-	#val_X = val_X[:, :, 0]
-	#test_X = test_X[:, :, 0]
+	train_y = (train_X[:, -1, 0] <= train_y).astype(np.int32)
+	val_y = (val_X[:, -1, 0] <= val_y).astype(np.int32)
+	test_y = (test_X[:, -1, 0] <= test_y).astype(np.int32)
+	#train_y = utils.to_one_hot((train_X[:, -1, 0] <= train_y).astype(np.int32))
+	#val_y = utils.to_one_hot((val_X[:, -1, 0] <= val_y).astype(np.int32))
+	#test_y = utils.to_one_hot((test_X[:, -1, 0] <= test_y).astype(np.int32))
 	#train_X, val_X, test_X, _, _, _ = utils.split_data_without_lags(scaled, n_lags, n_features)
 
-	fit_models, arm_hist, true_reward_hist, regret_hist, weights, model_hist = neuralBandit.run_bandit_2(train_X, train_y,
-																				explore=0.1, exp_annealing_rate=0.99995, recurrent=True)
+	#fit_models, arm_hist, true_reward_hist, regret_hist, weights, models_hist = neuralBandit.run_bandit_2(train_X, train_y,
+	#																			explore=0.1, exp_annealing_rate=0.99995, recurrent=True)
+
+	import predictor
+
+	predictor_instance = predictor.Predictor('adam', 'mse', (n_lags, n_features), train_X, train_y, val_X, val_y, 0)
+
+	_, weights, _, _ = predictor_instance.predict(val_X, val_y, gamma=0.1)
+	preds_test, weights, models_hist, regret_hist = predictor_instance.predict(test_X, test_y, weights=weights)
 
 	plt.plot(np.cumsum(regret_hist))
 	plt.title('cumulative regret')
@@ -107,22 +114,7 @@ if __name__ == '__main__':
 	plt.ylabel('regret')
 	plt.show()
 
-	print(pd.value_counts(true_reward_hist))
-	print(pd.value_counts(arm_hist))
-
-	sns.barplot(pd.value_counts(arm_hist).index, pd.value_counts(arm_hist).values)
-	plt.title('chosen arm distribution')
-	plt.ylabel('count')
-	plt.xlabel('arm')
-	plt.show()
-
-	sns.barplot(pd.value_counts(true_reward_hist).index, pd.value_counts(true_reward_hist).values)
-	plt.title('true reward distribution')
-	plt.ylabel('reward')
-	plt.xlabel('arm')
-	plt.show()
-
-	sns.barplot(pd.value_counts(model_hist).index, pd.value_counts(model_hist).values)
+	sns.barplot(pd.value_counts(models_hist).index, pd.value_counts(models_hist).values)
 	plt.title('model selection distribution')
 	plt.ylabel('count')
 	plt.xlabel('model')
@@ -140,13 +132,13 @@ if __name__ == '__main__':
 
 	from sklearn.metrics import accuracy_score
 
-	print('\n\n train score: ', accuracy_score(arm_hist, true_reward_hist), end='\n\n')
+	#print('\n\n train score: ', accuracy_score(arm_hist, true_reward_hist), end='\n\n')
 
-	preds_val = neuralBandit.predict_with_models(val_X, fit_models, weights)
+	#preds_val = neuralBandit.predict_with_models(val_X, fit_models, weights)
 
-	print('\n\n val score: ', accuracy_score(preds_val, np.argmax(val_y, axis=1)), end='\n\n')
+	#print('\n\n val score: ', accuracy_score(preds_val, np.argmax(val_y, axis=1)), end='\n\n')
 
-	preds_test = neuralBandit.predict_with_models(test_X, fit_models, weights)
+	#preds_test = neuralBandit.predict_with_models(test_X, fit_models, weights)
 
-	print('\n\n test score: ', accuracy_score(preds_test, np.argmax(test_y, axis=1)), end='\n\n')
+	print('\n\n test score: ', accuracy_score(preds_test, test_y), end='\n\n')
 
