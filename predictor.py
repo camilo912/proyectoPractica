@@ -15,9 +15,9 @@ def build_expert(input_shape, n_hidden, n_layers, optimizer, loss, lambda_term):
 
 	return model
 
-def init_comite(n, input_shape, n_hidden, n_layers, optimizer, loss):
-	experts = [build_expert(input_shape, n_hidden, n_layers, optimizer, loss) for _ in range(n)]
-	return experts
+#def init_comite(n, input_shape, n_hidden, n_layers, optimizer, loss):
+#	experts = [build_expert(input_shape, n_hidden, n_layers, optimizer, loss) for _ in range(n)]
+#	return experts
 
 def train(model, train_X, train_y, val_X, val_y, batch_size, n_epochs, verbose, lr):
 	import time

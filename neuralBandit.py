@@ -12,7 +12,7 @@ def build_experts(n, input_shape, n_hidden, n_layers):
 
 		for layer in range(n_layers):
 			model.add(Dense(n_hidden, kernel_initializer='glorot_uniform', activation='relu', 
-									input_dim=input_shape, kernel_regularizer=regularizers.l2(0.01)))
+									input_shape=input_shape, kernel_regularizer=regularizers.l2(0.01)))
 
 		# ouput layer
 		model.add(Dense(1, kernel_initializer='glorot_normal', activation='sigmoid', kernel_regularizer=regularizers.l2(0.01)))
@@ -26,15 +26,17 @@ def build_experts_lstm(n, input_shape, n_hidden, n_layers):
 	def build_expert():
 		from keras.models import Sequential
 		from keras import regularizers
-		from keras.layers import Dense, LSTM
+		from keras.layers import Dense, LSTM, Dropout
 
 		model = Sequential()
 		
 		model.add(LSTM(n_hidden, input_shape=input_shape, return_sequences=n_layers>1))
+		model.add(Dropout(0.2))
 		for layer in range(1, n_layers):
 			model.add(LSTM(n_hidden, return_sequences=layer < n_layers-1))
+			model.add(Dropout(0.2))
 
-		model.add(Dense(1, kernel_initializer='glorot_normal', activation='sigmoid', kernel_regularizer=regularizers.l2(0.01)))
+		model.add(Dense(1, kernel_initializer='glorot_normal', activation='sigmoid'))#, kernel_regularizer=regularizers.l2(0.01)))
 		return model
 
 	experts = [build_expert() for _ in range(n)]
@@ -66,11 +68,11 @@ def choose_arm(x, experts, explore):
 	pred = preds[chosen_arm]
 	return chosen_arm, pred
 
-def run_bandit_1(X, Y, explore, exp_annealing_rate=1, min_explore=.005, **kwargs):
+def train_bandit_1(X, Y, explore, exp_annealing_rate=1, min_explore=.005, **kwargs):
 	import time
 
 	n, n_arms = Y.shape
-	input_shape = X.shape[1]
+	input_shape = X.shape[1:]
 	experts = build_experts(n_arms, input_shape, 32, 1)
 	experts = compile_experts(experts, **kwargs)
 
@@ -171,12 +173,6 @@ def init_models(n_arms, input_shape):
 	model_12 = build_experts(n_arms, input_shape, n_hidden=512, n_layers=3)
 	model_12 = compile_experts(model_12, loss='binary_crossentropy', optimizer='adam')
 
-	model_13 = build_experts_lstm(n_arms, input_shape, n_hidden=256, n_layers=1)
-	model_13 = compile_experts(model_13, loss='binary_crossentropy', optimizer='adam')
-
-	model_14 = build_experts_lstm(n_arms, input_shape, n_hidden=256, n_layers=1)
-	model_14 = compile_experts(model_14, loss='binary_crossentropy', optimizer='adam')
-
 	return [model_1, model_2, model_3, model_4, model_5, model_11, model_6, model_7, model_8, model_9, model_10, model_12]
 	# return [model_2, model_4, model_7, model_9]
 	#return [model_4, model_5, model_12, model_9, model_10, model_12]
@@ -184,59 +180,23 @@ def init_models(n_arms, input_shape):
 def init_models_recurrent(n_arms, input_shape):
 	# init models
 	# 32 hidden units, 1 hidden layer, explore = .005
-	model_1 = build_experts_lstm(n_arms, input_shape, n_hidden=32, n_layers=1)
-	model_1 = compile_experts(model_1, loss='binary_crossentropy', optimizer='adam')
+	model_1 = build_experts_lstm(n_arms, input_shape, n_hidden=150, n_layers=1)
+	model_1 = compile_experts(model_1, loss='mse', optimizer='adam')
 
 	# 64 hidden units, 1 hidden layer, explore = .005
-	model_2 = build_experts_lstm(n_arms, input_shape, n_hidden=64, n_layers=1)
-	model_2 = compile_experts(model_2, loss='binary_crossentropy', optimizer='adam')
+	model_2 = build_experts_lstm(n_arms, input_shape, n_hidden=150, n_layers=2)
+	model_2 = compile_experts(model_2, loss='mse', optimizer='adam')
 
 	# 128 hidden units, 1 hidden layer, explore = .005
-	model_3 = build_experts_lstm(n_arms, input_shape, n_hidden=128, n_layers=1)
-	model_3 = compile_experts(model_3, loss='binary_crossentropy', optimizer='adam')
+	model_3 = build_experts_lstm(n_arms, input_shape, n_hidden=150, n_layers=1)
+	model_3 = compile_experts(model_3, loss='mse', optimizer='adam')
 
 
 	# 64 hidden units, 2 hidden layers, explore = .005
-	model_4 = build_experts_lstm(n_arms, input_shape, n_hidden=64, n_layers=2)
-	model_4 = compile_experts(model_4, loss='binary_crossentropy', optimizer='adam')
+	model_4 = build_experts_lstm(n_arms, input_shape, n_hidden=150, n_layers=2)
+	model_4 = compile_experts(model_4, loss='mse', optimizer='adam')
 
-
-	# 64 hidden units, 2 hidden layers, explore = .005
-	model_5 = build_experts_lstm(n_arms, input_shape, n_hidden=128, n_layers=2)
-	model_5 = compile_experts(model_5, loss='binary_crossentropy', optimizer='adam')
-
-
-	# 32 hidden units, 1 hidden layer, annealing_explore
-	model_6 = build_experts_lstm(n_arms, input_shape, n_hidden=32, n_layers=1)
-	model_6 = compile_experts(model_6, loss='binary_crossentropy', optimizer='adam')
-
-	# 64 hidden units, 1 hidden layer, annealing_explore
-	model_7 = build_experts_lstm(n_arms, input_shape, n_hidden=64, n_layers=1)
-	model_7 = compile_experts(model_7, loss='binary_crossentropy', optimizer='adam')
-
-	# 128 hidden units, 1 hidden layer, annealing_explore
-	model_8 = build_experts_lstm(n_arms, input_shape, n_hidden=128, n_layers=1)
-	model_8 = compile_experts(model_8, loss='binary_crossentropy', optimizer='adam')
-
-
-	# 64 hidden units, 2 hidden layers, annealing_explore
-	model_9 = build_experts_lstm(n_arms, input_shape, n_hidden=64, n_layers=2)
-	model_9 = compile_experts(model_9, loss='binary_crossentropy', optimizer='adam')
-
-
-	# 64 hidden units, 2 hidden layers, annealing_explore
-	model_10 = build_experts_lstm(n_arms, input_shape, n_hidden=128, n_layers=2)
-	model_10 = compile_experts(model_10, loss='binary_crossentropy', optimizer='adam')
-
-	# 512 hidden units, 3 hidden layers, explore = 0.005
-	model_11 = build_experts_lstm(n_arms, input_shape, n_hidden=512, n_layers=3)
-	model_11 = compile_experts(model_11, loss='binary_crossentropy', optimizer='adam')
-
-	# 512 hidden units, 3 hidden layers, annealing_explore
-	model_12 = build_experts_lstm(n_arms, input_shape, n_hidden=512, n_layers=3)
-	model_12 = compile_experts(model_12, loss='binary_crossentropy', optimizer='adam')
-
-	return [model_1, model_2, model_3, model_4, model_5, model_11, model_6, model_7, model_8, model_9, model_10, model_12]
+	return [model_1, model_2, model_3, model_4]
 
 def get_model_probabilities(weights, gamma_model):
 	n_models = len(weights)
@@ -250,7 +210,7 @@ def choose_model(weights, model_probabilities):
 	model = np.random.choice(np.arange(n_models), p=model_probabilities)
 	return model
 
-def run_bandit_2(X, Y, explore, exp_annealing_rate, min_explore=0.005, recurrent=False):
+def train_bandit_2(X, Y, explore, exp_annealing_rate, min_explore=0.005, recurrent=False):
 	import time
 
 	n, n_arms = Y.shape
@@ -336,20 +296,89 @@ def run_bandit_2(X, Y, explore, exp_annealing_rate, min_explore=0.005, recurrent
 
 	return models, arm_hist_2, true_reward_hist_2, regret_hist_2, weights, model_hist_2
 
-def predict_with_models(X, models, weights):
+def predict_with_weights(X, Y, models, weights, explore=0):
 	preds = []
+	regret_hist = []
+	true_reward_hist = []
+	models_hist = []
+
 	n_models = len(models)
-	model_probabilities = np.array([weight/sum(weights) for weight in weights])
 	for i in range(len(X)):
+		model_probabilities = np.array([weight/sum(weights) for weight in weights])
 		model_idx = np.random.choice(np.arange(n_models), p=model_probabilities)
 		experts = models[model_idx]
-		# tmp_preds = np.array([expert.predict(X[[i]]) for expert in experts]).squeeze()
-		tmp_preds = [expert.predict(X[[i]]) for expert in experts]
-		pred = np.argmax(tmp_preds)
-		preds.append(pred)
+		chosen_expert, pred = choose_arm(X[[i]], experts, explore)
+		
+		# historics
+		regret_hist.append(1 - Y[i, chosen_expert])
+		true_reward_hist.append(np.argmax(Y[i]))
+		models_hist.append(model_idx)
+		preds.append(chosen_expert)
 
-	return preds
+	return preds, regret_hist, true_reward_hist, models_hist
+
+def predict_and_train_with_weights(X, Y, models, weights, gamma, explore=0):
+	preds = []
+	regret_hist = []
+	true_reward_hist = []
+	models_hist = []
+
+	n_models = len(models)
+	for i in range(len(X)):
+		model_probabilities = np.array([weight/sum(weights) for weight in weights])
+		model_idx = np.random.choice(np.arange(n_models), p=model_probabilities)
+		experts = models[model_idx]
+		chosen_expert, pred = choose_arm(X[[i]], experts, explore)
+
+		# historics
+		regret_hist.append(1 - Y[i, chosen_expert])
+		true_reward_hist.append(np.argmax(Y[i]))
+		models_hist.append(model_idx)
+		preds.append(chosen_expert)
+		reward = Y[i, chosen_expert]
+
+		# update weights
+		weights[model_idx] = weights[model_idx]*np.exp((gamma*reward/(model_probabilities[model_idx]*n_models)))
+
+		# re train
+		model = models[model_idx][chosen_expert]
+		model.fit(X[[i]], np.expand_dims(reward, axis=0), epochs=1, verbose=0)
+		models[model_idx][chosen_expert] = model
+
+	return preds, weights, models, regret_hist, true_reward_hist, models_hist
+
+def predict(X, Y, experts, explore=0):
+	preds = []
+	regret_hist = []
+	true_reward_hist = []
+
+	for i in range(len(X)):
+		chosen_expert, pred = choose_arm(X[[i]], experts, explore)
 
 
+		# historics
+		regret_hist.append(1 - Y[i, chosen_expert])
+		true_reward_hist.append(np.argmax(Y[i]))
+		preds.append(chosen_expert)
+
+	return preds, regret_hist, true_reward_hist
+
+def predict_and_train(X, Y, experts, explore=0):
+	preds = []
+	regret_hist = []
+	true_reward_hist = []
+
+	for i in range(len(X)):
+		chosen_expert, pred = choose_arm(X[[i]], experts, explore)
 
 
+		# historics
+		regret_hist.append(1 - Y[i, chosen_expert])
+		true_reward_hist.append(np.argmax(Y[i]))
+		preds.append(chosen_expert)
+
+		expert = experts[chosen_expert]
+		expert.fit(X[[i]], np.expand_dims(Y[i, chosen_expert], axis=0), epochs=1, verbose=0)
+		experts[chosen_expert] = expert
+
+	return preds, experts, regret_hist, true_reward_hist

@@ -52,13 +52,13 @@ def series_to_supervised(data, n_in=1, n_out=1, dropnan=True):
 		agg.dropna(inplace=True)
 	return agg
 
-def split_data(values, n_lags, n_features):
-	reframed = series_to_supervised(values, n_lags, 1).values
+def split_data(values, n_lags, n_features, n_out=1):
+	reframed = series_to_supervised(values, n_lags, n_out).values
 	wall = int(reframed.shape[0]*0.6)
 	wall_val = int(reframed.shape[0]*0.2)
 	n_obs = n_features*n_lags
 
-	train_X, train_y = reframed[:wall, :n_obs].reshape(-1, n_lags, n_features), reframed[:wall, -n_features]
+	train_X, train_y = reframed[:wall, :n_obs].reshape(-1, n_lags, n_features), reframed[:wall, -n_features] # [-n_features*i for i in range(1, n_out+1)]
 	val_X, val_y = reframed[wall:wall+wall_val, :n_obs].reshape(-1, n_lags, n_features), reframed[wall:wall+wall_val, -n_features]
 	test_X, test_y = reframed[wall+wall_val:, :n_obs].reshape(-1, n_lags, n_features), reframed[wall+wall_val:, -n_features]
 
@@ -161,3 +161,57 @@ def bayes_optimization(MAX_EVALS, scaled, n_features, scaler):
 	of_connection.close()
 
 	return best
+
+def show_graphs(regret_hist=None, true_reward_hist=None, arm_hist=None, models_hist=None, mode='train'):
+	from matplotlib import pyplot as plt
+	import seaborn as sns
+
+	if(regret_hist):
+		plt.figure()
+		plt.plot(np.cumsum(regret_hist), label='actual ' + mode + ' regret')
+		plt.plot(np.arange(len(regret_hist)), label='100 %% regret')
+		plt.plot([0.0, len(regret_hist)], [0.0, len(regret_hist)/2.0], label='50 %% regret')
+		plt.title('cumulative ' + mode + ' regret')
+		plt.xlabel('$t$')
+		plt.ylabel('regret')
+		plt.legend()
+
+	if(arm_hist):
+		print(pd.value_counts(arm_hist))
+		plt.figure()
+		sns.barplot(pd.value_counts(arm_hist).index, pd.value_counts(arm_hist).values)
+		plt.title('chosen ' + mode + ' arm distribution')
+		plt.ylabel('count')
+		plt.xlabel('arm')
+
+	if(true_reward_hist):
+		print(pd.value_counts(true_reward_hist))
+		plt.figure()
+		sns.barplot(pd.value_counts(true_reward_hist).index, pd.value_counts(true_reward_hist).values)
+		plt.title('true ' + mode + ' reward distribution')
+		plt.ylabel('reward')
+		plt.xlabel('arm')
+
+	if(models_hist):
+		plt.figure()
+		sns.barplot(pd.value_counts(models_hist).index, pd.value_counts(models_hist).values)
+		plt.title(mode + ' model selection distribution')
+		plt.ylabel('count')
+		plt.xlabel('model')
+	
+	plt.show()
+
+def get_total_reward(actuals, nexts, preds):
+	variations = (nexts - actuals)/actuals
+
+	reward = 1
+	historic_reward = [1]
+
+	for i in range(len(preds)):
+		if(preds[i]):
+			reward += reward*(variations[i])
+		else:
+			reward -= reward*(variations[i])
+		historic_reward.append(reward)
+
+	return reward, historic_reward
