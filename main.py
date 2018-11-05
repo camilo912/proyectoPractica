@@ -3,43 +3,65 @@ import pandas as pd
 import modelos
 import utils
 import neuralBandit
+import time
 
 from sklearn.preprocessing import MinMaxScaler
 from matplotlib import pyplot as plt
 import seaborn as sns
-from timeit import default_timer as timer
 
 
 if __name__ == '__main__':
 	######################################## only predictions model ####################################################
 
-	# df = pd.read_csv('data/datos_proyecto.csv', header=0)
-	# scaled, scaler = utils.normalize_data(df.values)
-	# n_features = scaled.shape[1]
-	# max_evals = 100
+	df = pd.read_csv('data/datos_proyecto.csv', header=0)
+	scaled, scaler = utils.normalize_data(df.values)
+	n_features = scaled.shape[1]
+	max_evals = 100
 
-	# # hyper parameters
-	# batch_size = 64
-	# lr = 1e-3
-	# n_epochs = 150
-	# n_hidden = 30
-	# n_lags = 30
+	# hyper parameters
+	batch_size = 64
+	lr = 1e-3
+	n_epochs = 150
+	n_hidden = 30
+	n_lags = 30
 
-	#best = utils.bayes_optimization(max_evals, scaled, n_features, scaler)
-	#batch_size, lr, n_epochs, n_hidden, n_lags = int(best['batch_size']), best['lr'], int(best['n_epochs']), int(best['n_hidden']), int(best['n_lags'])
+	# best = utils.bayes_optimization(max_evals, scaled, n_features, scaler)
+	# batch_size, lr, n_epochs, n_hidden, n_lags = int(best['batch_size']), best['lr'], int(best['n_epochs']), int(best['n_hidden']), int(best['n_lags'])
 
-	# train_X, val_X, test_X, train_y, val_y, test_y = utils.split_data(scaled, n_lags, n_features)
+	train_X, val_X, test_X, train_y, val_y, test_y = utils.split_data(scaled, n_lags, n_features)
 
-	# start = timer()
+	start = time.time()
 
-	# model = modelos.Model_predictor(lr, n_hidden, n_lags, n_features, scaler)
-	# model.train(train_X, val_X, train_y, val_y, batch_size, n_epochs)
+	model = modelos.Model_predictor(lr, n_hidden, n_lags, n_features, scaler)
+	model.train(train_X, val_X, train_y, val_y, batch_size, n_epochs)
+	preds_train = model.predict(train_X)
+	preds_val = model.predict(val_X)
+	preds_test = model.predict(test_X)
+
+	print('predictor mdoel finished in: ', time.time()-start, ' seconds')
+	
+	######## start for continue with other model ########
+
+	actuals_train, actuals_val, actuals_test = train_X[:, -1, 0], val_X[:, -1, 0], test_X[:, -1, 0]
+	nexts_train, nexts_val, nexts_test = train_y.copy(), val_y.copy(), test_y.copy()
+
+	train_y = (train_X[:, -1, 0] <= train_y).astype(np.int32)
+	val_y = (val_X[:, -1, 0] <= val_y).astype(np.int32)
+	test_y = (test_X[:, -1, 0] <= test_y).astype(np.int32)
+
+	train_X = np.append(train_X[:, :, 0], preds_train, axis=1).reshape(-1, n_lags+1, 1)
+	val_X = np.append(val_X[:, :, 0], preds_val, axis=1).reshape(-1, n_lags+1, 1)
+	test_X = np.append(test_X[:, :, 0], preds_test, axis=1).reshape(-1, n_lags+1, 1)
+	n_features = 1
+	n_lags += 1
+
+	############# finish for continue with other model ###################
 
 	# rmse_train, y_hat_train, y_trainset = model.eval(train_X, train_y)
 	# rmse_val, y_hat_val, y_valset = model.eval(val_X, val_y)
 	# rmse, y_hat, y = model.eval(test_X, test_y)
 
-	# run_time = timer() - start
+	# run_time = time.time() - start
 	
 	# # print results
 	# print('rmse: %f' % rmse, 'run_time: %f' % run_time)
@@ -80,12 +102,12 @@ if __name__ == '__main__':
 	# print(train_X.shape)
 	# print(train_y.shape)
 
-	# start = timer()
+	# start = time.time()
 	# model2 = modelos.Model_decisor(lr, n_features, scaler, n_classes, gamma)
 	# model2.train(train_X, val_X, train_y, val_y, batch_size, n_epochs, variations)
 	# acc, y_hat, y = model2.eval(val_X, val_y)
 
-	# run_time = timer() - start
+	# run_time = time.time() - start
 	
 	# # print results
 	# print('acc: %f' % acc, 'run_time: %f' % run_time)
@@ -228,16 +250,16 @@ if __name__ == '__main__':
 
 	df = pd.read_csv('data/datos_proyecto.csv', header=0)
 	scaled, scaler = utils.normalize_data(df.values)
-	n_features = scaled.shape[1]
+	#n_features = scaled.shape[1]
 
-	n_lags = 30
+	#n_lags = 30
 
-	train_X, val_X, test_X, train_y, val_y, test_y = utils.split_data(scaled, n_lags, n_features)
-	actuals_train, actuals_val, actuals_test = train_X[:, -1, 0], val_X[:, -1, 0], test_X[:, -1, 0]
-	nexts_train, nexts_val, nexts_test = train_y.copy(), val_y.copy(), test_y.copy()
-	train_y = (train_X[:, -1, 0] <= train_y).astype(np.int32)
-	val_y = (val_X[:, -1, 0] <= val_y).astype(np.int32)
-	test_y = (test_X[:, -1, 0] <= test_y).astype(np.int32)
+	#train_X, val_X, test_X, train_y, val_y, test_y = utils.split_data(scaled, n_lags, n_features)
+	#actuals_train, actuals_val, actuals_test = train_X[:, -1, 0], val_X[:, -1, 0], test_X[:, -1, 0]
+	#nexts_train, nexts_val, nexts_test = train_y.copy(), val_y.copy(), test_y.copy()
+	#train_y = (train_X[:, -1, 0] <= train_y).astype(np.int32)
+	#val_y = (val_X[:, -1, 0] <= val_y).astype(np.int32)
+	#test_y = (test_X[:, -1, 0] <= test_y).astype(np.int32)
 
 	import predictor
 
@@ -246,12 +268,15 @@ if __name__ == '__main__':
 	predictor_instance.predict_and_train(train_X, train_y)
 	preds_test, models_hist, regret_hist = predictor_instance.predict_and_train(test_X, test_y)
 
-	# plt.plot(np.cumsum(regret_hist))
-	# plt.plot(np.arange(len(regret_hist)))
-	# plt.title('cumulative regret')
-	# plt.xlabel('$t$')
-	# plt.ylabel('regret')
-	# plt.show()
+	plt.figure()
+	plt.plot(np.cumsum(regret_hist), label='actual regret')
+	plt.plot(np.arange(len(regret_hist)), label='100 %% regret')
+	plt.plot([0.0, len(regret_hist)], [0.0, len(regret_hist)/2.0], label='50 %% regret')
+	plt.title('cumulative training regret')
+	plt.xlabel('$t$')
+	plt.ylabel('regret')
+	plt.legend()
+	plt.show()
 
 	sns.barplot(pd.value_counts(models_hist).index, pd.value_counts(models_hist).values)
 	plt.title('model selection distribution')
