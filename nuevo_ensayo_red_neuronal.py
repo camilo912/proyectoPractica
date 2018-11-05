@@ -11,15 +11,17 @@ def execute_model(scaled, n_features, scaler, batch_size, lambda_term, loss, lr,
 
 
 	from keras.models import Sequential
-	from keras.layers import LSTM, Dense
+	from keras.layers import LSTM, Dense, Dropout
 	from keras import regularizers
 	from keras.optimizers import Adam
 
 	model = Sequential()
-	model.add(LSTM(n_hidden, input_shape=(n_lags, n_features)))
+	model.add(LSTM(n_hidden, input_shape=(n_lags, n_features), return_sequences=False))
+	model.add(Dropout(0.2))
+	#model.add(LSTM(n_hidden))
 	model.add(Dense(1, activation='sigmoid', kernel_regularizer=regularizers.l2(lambda_term)))
 
-	opt = Adam(lr=lr)
+	opt = Adam(lr=lr, clipvalue=0.1)
 
 	model.compile(optimizer=opt, loss=loss)
 
@@ -33,10 +35,13 @@ def execute_model(scaled, n_features, scaler, batch_size, lambda_term, loss, lr,
 	acc = accuracy_score(test_y, preds_classes)
 	
 	if(show):
-		plt.plot(history.history['loss'])
-		plt.plot(history.history['val_loss'])
-		plt.show()
+		plt.subplot(2, 1, 1)
+		plt.plot(history.history['loss'], label='train loss')
+		plt.plot(history.history['val_loss'], label='val loss')
+		plt.legend()
+		#plt.show()
 
+		plt.subplot(2, 1, 2)
 		plt.plot(test_y)
 		plt.plot(preds)
 		plt.show()
@@ -144,13 +149,13 @@ def run(data):
 	losses = ['mse', 'binary_crossentropy']
 	
 	# hyper parameters
-	batch_size = 168
-	lambda_term = 0.012873170471012024
-	loss_idx = 1
-	lr = 0.07491706711224875
-	n_epochs = 38
-	n_hidden = 99
-	n_lags = 2
+	batch_size = 250 # 321
+	lambda_term = 0# 0.017
+	loss_idx = 0
+	lr = 0.019
+	n_epochs = 70 # 84
+	n_hidden = 150 # 34
+	n_lags = 10
 
 	#max_evals = 100
 	#best = bayes_optimization(max_evals, scaled, n_features, scaler, losses)

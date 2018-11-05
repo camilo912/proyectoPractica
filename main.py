@@ -105,14 +105,14 @@ if __name__ == '__main__':
 
 	predictor_instance = predictor.Predictor('adam', 'mse', (n_lags, n_features), train_X, train_y, val_X, val_y, 0)
 
-	_, weights, _, _ = predictor_instance.predict(train_X, train_y, gamma=0.1)
-	preds_test, weights, models_hist, regret_hist = predictor_instance.predict(test_X, test_y, weights=weights)
+	predictor_instance.predict_and_train(train_X, train_y)
+	preds_test, models_hist, regret_hist = predictor_instance.predict_and_train(test_X, test_y)
 
-	plt.plot(np.cumsum(regret_hist))
-	plt.title('cumulative regret')
-	plt.xlabel('$t$')
-	plt.ylabel('regret')
-	plt.show()
+	#plt.plot(np.cumsum(regret_hist))
+	#plt.title('cumulative regret')
+	#plt.xlabel('$t$')
+	#plt.ylabel('regret')
+	#plt.show()
 
 	sns.barplot(pd.value_counts(models_hist).index, pd.value_counts(models_hist).values)
 	plt.title('model selection distribution')

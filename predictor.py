@@ -32,40 +32,34 @@ def train(model, train_X, train_y, val_X, val_y, batch_size, n_epochs, verbose, 
 class Predictor():
 	def __init__(self, optimizer, loss, input_shape, train_X, train_y, val_X, val_y, verbose):
 		self.models = []
-		self.models.append(train(build_expert(input_shape, 34, 3, optimizer, loss, 0.017), train_X, train_y, val_X, val_y, 321, 84, verbose, 0.019))
-		self.models.append(train(build_expert(input_shape, 34, 2, optimizer, loss, 0.017), train_X, train_y, val_X, val_y, 321, 84, verbose, 0.019))
-		self.models.append(train(build_expert(input_shape, 34, 1, optimizer, loss, 0.017), train_X, train_y, val_X, val_y, 321, 84, verbose, 0.019))
+		self.models.append(train(build_expert(input_shape, 150, 1, optimizer, loss, 0), train_X, train_y, val_X, val_y, 250, 70, verbose, 0.019))
+		self.models.append(train(build_expert(input_shape, 150, 1, optimizer, loss, 0), train_X, train_y, val_X, val_y, 250, 70, verbose, 0.019))
+		self.models.append(train(build_expert(input_shape, 150, 1, optimizer, loss, 0.), train_X, train_y, val_X, val_y, 250, 70, verbose, 0.019))
 		self.n_models = len(self.models)
-		self.gamma = 0.1
-		self.weights = []
 
-	def predict(self, X, y, gamma=None, weights=None):
+	def predict_and_train(self, X, y):
 		import numpy as np
 
-		if(gamma):
-			self.gamma = gamma
-
-		if weights == None: 
-			self.weights = np.ones(len(self.models))
-		else:
-			self.weights = weights
-		
 		preds = []
 		models_hist = []
 		regret_hist = []
 		
 		for i in range(len(X)):
-			p = self.get_model_probabilities()
-			model_idx = np.random.choice(np.arange(self.n_models), p=p)
+			tmp = [self.models[i].predict(np.expand_dims(X[i], axis=0)) for i in range(len(self.models))]
+			distances = [max(p, 1-p) for p in tmp]
+			model_idx = np.argmax(distances)
+			pred = int(tmp[model_idx] > 0.5)
 			models_hist.append(model_idx)
-			pred = int(self.models[model_idx].predict(np.expand_dims(X[i], axis=0)) > 0.5)
 			preds.append(pred)
 			reward = 1 if pred == y[i] else 0
 			regret_hist.append(1 - reward)
+			model = self.models[model_idx]
+			model.fit(np.expand_dims(X[i], axis=0), np.expand_dims(y[i], axis=0), epochs=1, verbose=0)
+			self.models[model_idx] = model
 			#self.weights[model_idx] = self.weights[model_idx]*np.exp((self.gamma*reward/(p[model_idx]*self.n_models)))
-			self.weights[model_idx] = self.weights[model_idx]*np.exp((reward/(p[model_idx]*self.n_models)))
+			#self.weights[model_idx] = self.weights[model_idx]*np.exp((reward/(p[model_idx]*self.n_models)))
 
-		return preds, weights, models_hist, regret_hist
+		return preds, models_hist, regret_hist
 
 			
 
