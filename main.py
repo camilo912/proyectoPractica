@@ -105,7 +105,7 @@ if __name__ == '__main__':
 
 	predictor_instance = predictor.Predictor('adam', 'mse', (n_lags, n_features), train_X, train_y, val_X, val_y, 0)
 
-	_, weights, _, _ = predictor_instance.predict(val_X, val_y, gamma=0.1)
+	_, weights, _, _ = predictor_instance.predict(train_X, train_y, gamma=0.1)
 	preds_test, weights, models_hist, regret_hist = predictor_instance.predict(test_X, test_y, weights=weights)
 
 	plt.plot(np.cumsum(regret_hist))

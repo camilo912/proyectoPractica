@@ -144,13 +144,13 @@ def run(data):
 	losses = ['mse', 'binary_crossentropy']
 	
 	# hyper parameters
-	batch_size = 402
-	lambda_term = 0.018932910620644897
-	loss_idx = 0
-	lr = 0.05
-	n_epochs = 139
-	n_hidden = 183
-	n_lags = 3
+	batch_size = 168
+	lambda_term = 0.012873170471012024
+	loss_idx = 1
+	lr = 0.07491706711224875
+	n_epochs = 38
+	n_hidden = 99
+	n_lags = 2
 
 	#max_evals = 100
 	#best = bayes_optimization(max_evals, scaled, n_features, scaler, losses)

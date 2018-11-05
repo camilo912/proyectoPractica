@@ -1,4 +1,4 @@
-def build_expert(input_shape, n_hidden, n_layers, optimizer, loss):
+def build_expert(input_shape, n_hidden, n_layers, optimizer, loss, lambda_term):
 	from keras.models import Sequential
 	from keras import regularizers
 	from keras.layers import Dense, LSTM
@@ -9,7 +9,7 @@ def build_expert(input_shape, n_hidden, n_layers, optimizer, loss):
 	for layer in range(1, n_layers):
 		model.add(LSTM(n_hidden, return_sequences=layer < n_layers-1))
 
-	model.add(Dense(1, kernel_initializer='glorot_normal', activation='sigmoid', kernel_regularizer=regularizers.l2(0.01)))
+	model.add(Dense(1, kernel_initializer='glorot_normal', activation='sigmoid', kernel_regularizer=regularizers.l2(lambda_term)))
 
 	model.compile(loss=loss, optimizer=optimizer)
 
@@ -19,7 +19,7 @@ def init_comite(n, input_shape, n_hidden, n_layers, optimizer, loss):
 	experts = [build_expert(input_shape, n_hidden, n_layers, optimizer, loss) for _ in range(n)]
 	return experts
 
-def train(model, train_X, train_y, val_X, val_y, batch_size, n_epochs, verbose):
+def train(model, train_X, train_y, val_X, val_y, batch_size, n_epochs, verbose, lr):
 	import time
 
 	start = time.time()
@@ -32,16 +32,9 @@ def train(model, train_X, train_y, val_X, val_y, batch_size, n_epochs, verbose):
 class Predictor():
 	def __init__(self, optimizer, loss, input_shape, train_X, train_y, val_X, val_y, verbose):
 		self.models = []
-		#self.models.append(train(build_expert(input_shape, 100, 1, optimizer, loss), train_X, train_y, val_X, val_y, 32, 120, verbose))
-		#self.models.append(train(build_expert(input_shape, 200, 1, optimizer, loss), train_X, train_y, val_X, val_y, 32, 120, verbose))
-		self.models.append(train(build_expert(input_shape, 183, 1, optimizer, loss), train_X, train_y, val_X, val_y, 32, 120, verbose))
-		self.models.append(train(build_expert(input_shape, 400, 1, optimizer, loss), train_X, train_y, val_X, val_y, 32, 120, verbose))
-		#self.models.append(train(build_expert(input_shape, 500, 1, optimizer, loss), train_X, train_y, val_X, val_y, 32, 120, verbose))
-		#self.models.append(train(build_expert(input_shape, 100, 2, optimizer, loss), train_X, train_y, val_X, val_y, 32, 120, verbose))
-		#self.models.append(train(build_expert(input_shape, 200, 2, optimizer, loss), train_X, train_y, val_X, val_y, 32, 120, verbose))
-		#self.models.append(train(build_expert(input_shape, 300, 2, optimizer, loss), train_X, train_y, val_X, val_y, 32, 120, verbose))
-		#self.models.append(train(build_expert(input_shape, 400, 2, optimizer, loss), train_X, train_y, val_X, val_y, 32, 120, verbose))
-		#self.models.append(train(build_expert(input_shape, 500, 2, optimizer, loss), train_X, train_y, val_X, val_y, 32, 120, verbose))
+		self.models.append(train(build_expert(input_shape, 34, 3, optimizer, loss, 0.017), train_X, train_y, val_X, val_y, 321, 84, verbose, 0.019))
+		self.models.append(train(build_expert(input_shape, 34, 2, optimizer, loss, 0.017), train_X, train_y, val_X, val_y, 321, 84, verbose, 0.019))
+		self.models.append(train(build_expert(input_shape, 34, 1, optimizer, loss, 0.017), train_X, train_y, val_X, val_y, 321, 84, verbose, 0.019))
 		self.n_models = len(self.models)
 		self.gamma = 0.1
 		self.weights = []
@@ -69,7 +62,8 @@ class Predictor():
 			preds.append(pred)
 			reward = 1 if pred == y[i] else 0
 			regret_hist.append(1 - reward)
-			self.weights[model_idx] = self.weights[model_idx]*np.exp((self.gamma*reward/(p[model_idx]*self.n_models)))
+			#self.weights[model_idx] = self.weights[model_idx]*np.exp((self.gamma*reward/(p[model_idx]*self.n_models)))
+			self.weights[model_idx] = self.weights[model_idx]*np.exp((reward/(p[model_idx]*self.n_models)))
 
 		return preds, weights, models_hist, regret_hist
 
@@ -77,7 +71,8 @@ class Predictor():
 
 	def get_model_probabilities(self):
 		import numpy as np
-		p = np.array([(1-self.gamma)*weight/sum(self.weights) + self.gamma/self.n_models for weight in self.weights])
+		#p = np.array([(1-self.gamma)*weight/sum(self.weights) + self.gamma/self.n_models for weight in self.weights])
+		p = np.array([weight/sum(self.weights) for weight in self.weights])
 		return p
 
 
