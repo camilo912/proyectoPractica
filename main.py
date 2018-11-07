@@ -315,18 +315,28 @@ if __name__ == '__main__':
 	gamma = 0.95
 	refresh_rate = 50
 	n_classes = 2
-	n_epochs = 10
+	n_epochs = 1
 
-	train_X_inv, val_X_inv, test_X_inv, train_y_inv, val_y_inv, test_y_inv = utils.split_data_without_lags(df.values, n_lags, n_features)
-	train_rewards = (train_y_inv - train_X_inv[:, -n_features]) / train_X_inv[:, -n_features]
-	val_rewards = (val_y_inv - val_X_inv[:, -n_features]) / val_X_inv[:, -n_features]
-	test_rewards = (test_y_inv - test_X_inv[:, -n_features]) / test_X_inv[:, -n_features]
+	# train_X_inv, val_X_inv, test_X_inv, train_y_inv, val_y_inv, test_y_inv = utils.split_data_without_lags(df.values, n_lags, n_features)
+	# train_rewards = (train_y_inv - train_X_inv[:, -n_features]) / train_X_inv[:, -n_features]
+	# val_rewards = (val_y_inv - val_X_inv[:, -n_features]) / val_X_inv[:, -n_features]
+	# test_rewards = (test_y_inv - test_X_inv[:, -n_features]) / test_X_inv[:, -n_features]
+	# train_rewards = np.array([-train_rewards, train_rewards]).T
+	# val_rewards = np.array([-val_rewards, val_rewards]).T
+	# test_rewards = np.array([-test_rewards, test_rewards]).T
+	# train_X, val_X, test_X, train_y, val_y, test_y = utils.split_data_without_lags(scaled, n_lags, n_features)
+
+	train_X_inv, val_X_inv, test_X_inv, train_y_inv, val_y_inv, test_y_inv = utils.split_data(df.values, n_lags, n_features)
+	train_rewards = (train_y_inv - train_X_inv[:, -1, 0]) / train_X_inv[:, -1, 0]
+	val_rewards = (val_y_inv - val_X_inv[:, -1, 0]) / val_X_inv[:, -1, 0]
+	test_rewards = (test_y_inv - test_X_inv[:, -1, 0]) / test_X_inv[:, -1, 0]
 	train_rewards = np.array([-train_rewards, train_rewards]).T
 	val_rewards = np.array([-val_rewards, val_rewards]).T
 	test_rewards = np.array([-test_rewards, test_rewards]).T
-	train_X, val_X, test_X, train_y, val_y, test_y = utils.split_data_without_lags(scaled, n_lags, n_features)
+	train_X, val_X, test_X, train_y, val_y, test_y = utils.split_data(scaled, n_lags, n_features)
 
-	model = Model(n_features*n_lags, n_lags, lr, n_hidden, refresh_rate, n_classes)
+	# model = Model(n_features*n_lags, n_lags, lr, n_hidden, refresh_rate, n_classes)
+	model = Model(n_features, n_lags, lr, n_hidden, refresh_rate, n_classes)
 
 	preds_train = model.run(train_X, train_y, train_rewards, epsilon, gamma, n_epochs)
 
@@ -336,9 +346,12 @@ if __name__ == '__main__':
 
 	#print(preds_train)
 
-	acum_reward_train, historic_reward_train = utils.get_total_reward(train_X_inv[:, -n_features], train_y_inv, preds_train)
-	acum_reward_val, historic_reward_val = utils.get_total_reward(val_X_inv[:, -n_features], val_y_inv, preds_val)
-	acum_reward_test, historic_reward_test = utils.get_total_reward(test_X_inv[:, -n_features], test_y_inv, preds_test)
+	#acum_reward_train, historic_reward_train = utils.get_total_reward(train_X_inv[:, -n_features], train_y_inv, preds_train)
+	#acum_reward_val, historic_reward_val = utils.get_total_reward(val_X_inv[:, -n_features], val_y_inv, preds_val)
+	#acum_reward_test, historic_reward_test = utils.get_total_reward(test_X_inv[:, -n_features], test_y_inv, preds_test)
+	acum_reward_train, historic_reward_train = utils.get_total_reward(train_X_inv[:, -1, 0], train_y_inv, preds_train)
+	acum_reward_val, historic_reward_val = utils.get_total_reward(val_X_inv[:, -1, 0], val_y_inv, preds_val)
+	acum_reward_test, historic_reward_test = utils.get_total_reward(test_X_inv[:, -1, 0], test_y_inv, preds_test)
 	print('training final reward: ', acum_reward_train)
 	print('validation final reward: ', acum_reward_val)
 	print('test final reward: ', acum_reward_test)
