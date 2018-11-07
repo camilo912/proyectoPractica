@@ -11,49 +11,49 @@ import seaborn as sns
 
 
 if __name__ == '__main__':
-	######################################## only predictions model ####################################################
+	# ######################################## only predictions model ####################################################
 
-	df = pd.read_csv('data/datos_proyecto.csv', header=0)
-	scaled, scaler = utils.normalize_data(df.values)
-	n_features = scaled.shape[1]
-	max_evals = 100
+	# df = pd.read_csv('data/datos_proyecto.csv', header=0)
+	# scaled, scaler = utils.normalize_data(df.values)
+	# n_features = scaled.shape[1]
+	# max_evals = 100
 
-	# hyper parameters
-	batch_size = 64
-	lr = 1e-3
-	n_epochs = 150
-	n_hidden = 30
-	n_lags = 30
+	# # hyper parameters
+	# batch_size = 64
+	# lr = 1e-3
+	# n_epochs = 150
+	# n_hidden = 30
+	# n_lags = 30
 
-	# best = utils.bayes_optimization(max_evals, scaled, n_features, scaler)
-	# batch_size, lr, n_epochs, n_hidden, n_lags = int(best['batch_size']), best['lr'], int(best['n_epochs']), int(best['n_hidden']), int(best['n_lags'])
+	# # best = utils.bayes_optimization(max_evals, scaled, n_features, scaler)
+	# # batch_size, lr, n_epochs, n_hidden, n_lags = int(best['batch_size']), best['lr'], int(best['n_epochs']), int(best['n_hidden']), int(best['n_lags'])
 
-	train_X, val_X, test_X, train_y, val_y, test_y = utils.split_data(scaled, n_lags, n_features)
+	# train_X, val_X, test_X, train_y, val_y, test_y = utils.split_data(scaled, n_lags, n_features)
 
-	start = time.time()
+	# start = time.time()
 
-	model = modelos.Model_predictor(lr, n_hidden, n_lags, n_features, scaler)
-	model.train(train_X, val_X, train_y, val_y, batch_size, n_epochs)
-	preds_train = model.predict(train_X)
-	preds_val = model.predict(val_X)
-	preds_test = model.predict(test_X)
+	# model = modelos.Model_predictor(lr, n_hidden, n_lags, n_features, scaler)
+	# model.train(train_X, val_X, train_y, val_y, batch_size, n_epochs)
+	# preds_train = model.predict(train_X)
+	# preds_val = model.predict(val_X)
+	# preds_test = model.predict(test_X)
 
-	print('predictor mdoel finished in: ', time.time()-start, ' seconds')
+	# print('predictor mdoel finished in: ', time.time()-start, ' seconds')
 	
-	######## start for continue with other model ########
+	# ######## start for continue with other model ########
 
-	actuals_train, actuals_val, actuals_test = train_X[:, -1, 0], val_X[:, -1, 0], test_X[:, -1, 0]
-	nexts_train, nexts_val, nexts_test = train_y.copy(), val_y.copy(), test_y.copy()
+	# actuals_train, actuals_val, actuals_test = train_X[:, -1, 0], val_X[:, -1, 0], test_X[:, -1, 0]
+	# nexts_train, nexts_val, nexts_test = train_y.copy(), val_y.copy(), test_y.copy()
 
-	train_y = (train_X[:, -1, 0] <= train_y).astype(np.int32)
-	val_y = (val_X[:, -1, 0] <= val_y).astype(np.int32)
-	test_y = (test_X[:, -1, 0] <= test_y).astype(np.int32)
+	# train_y = (train_X[:, -1, 0] <= train_y).astype(np.int32)
+	# val_y = (val_X[:, -1, 0] <= val_y).astype(np.int32)
+	# test_y = (test_X[:, -1, 0] <= test_y).astype(np.int32)
 
-	train_X = np.append(train_X[:, :, 0], preds_train, axis=1).reshape(-1, n_lags+1, 1)
-	val_X = np.append(val_X[:, :, 0], preds_val, axis=1).reshape(-1, n_lags+1, 1)
-	test_X = np.append(test_X[:, :, 0], preds_test, axis=1).reshape(-1, n_lags+1, 1)
-	n_features = 1
-	n_lags += 1
+	# train_X = np.append(train_X[:, :, 0], preds_train, axis=1).reshape(-1, n_lags+1, 1)
+	# val_X = np.append(val_X[:, :, 0], preds_val, axis=1).reshape(-1, n_lags+1, 1)
+	# test_X = np.append(test_X[:, :, 0], preds_test, axis=1).reshape(-1, n_lags+1, 1)
+	# n_features = 1
+	# n_lags += 1
 
 	############# finish for continue with other model ###################
 
@@ -246,51 +246,111 @@ if __name__ == '__main__':
 
 
 
-	####################################### no weights or gamma project ##################################3
+	####################################### no weights or gamma project ###################################
+
+	# df = pd.read_csv('data/datos_proyecto.csv', header=0)
+	# scaled, scaler = utils.normalize_data(df.values)
+	# #n_features = scaled.shape[1]
+
+	# #n_lags = 30
+
+	# #train_X, val_X, test_X, train_y, val_y, test_y = utils.split_data(scaled, n_lags, n_features)
+	# #actuals_train, actuals_val, actuals_test = train_X[:, -1, 0], val_X[:, -1, 0], test_X[:, -1, 0]
+	# #nexts_train, nexts_val, nexts_test = train_y.copy(), val_y.copy(), test_y.copy()
+	# #train_y = (train_X[:, -1, 0] <= train_y).astype(np.int32)
+	# #val_y = (val_X[:, -1, 0] <= val_y).astype(np.int32)
+	# #test_y = (test_X[:, -1, 0] <= test_y).astype(np.int32)
+
+	# import predictor
+
+	# predictor_instance = predictor.Predictor('adam', 'mse', (n_lags, n_features), train_X, train_y, val_X, val_y, 0)
+
+	# predictor_instance.predict_and_train(train_X, train_y)
+	# preds_test, models_hist, regret_hist = predictor_instance.predict_and_train(test_X, test_y)
+
+	# plt.figure()
+	# plt.plot(np.cumsum(regret_hist), label='actual regret')
+	# plt.plot(np.arange(len(regret_hist)), label='100 %% regret')
+	# plt.plot([0.0, len(regret_hist)], [0.0, len(regret_hist)/2.0], label='50 %% regret')
+	# plt.title('cumulative training regret')
+	# plt.xlabel('$t$')
+	# plt.ylabel('regret')
+	# plt.legend()
+	# plt.show()
+
+	# sns.barplot(pd.value_counts(models_hist).index, pd.value_counts(models_hist).values)
+	# plt.title('model selection distribution')
+	# plt.ylabel('count')
+	# plt.xlabel('model')
+	# plt.show()
+
+	# from sklearn.metrics import accuracy_score
+
+	# print('\n\n test score: ', accuracy_score(preds_test, test_y), end='\n\n')
+
+	# limit = -1
+	# #acum_reward, historic_reward = utils.get_total_reward(actuals_val[:limit], nexts_val[:limit], preds_val[:limit])
+	# acum_reward, historic_reward = utils.get_total_reward(actuals_test[:limit], nexts_test[:limit], preds_test[:limit])
+	# plt.plot(historic_reward)
+	# plt.show()
+	# print('total reward: ', acum_reward)
+
+
+	################################################# q-learning model ###################################################
+
+	from q_learning_models import Model
 
 	df = pd.read_csv('data/datos_proyecto.csv', header=0)
+
 	scaled, scaler = utils.normalize_data(df.values)
-	#n_features = scaled.shape[1]
 
-	#n_lags = 30
+	n_features = scaled.shape[1]
+	n_lags = 30
+	lr= 1e-3
+	n_hidden = 150
+	epsilon = 0.1
+	gamma = 0.95
+	refresh_rate = 10
+	n_classes = 2
+	n_epochs = 1
 
-	#train_X, val_X, test_X, train_y, val_y, test_y = utils.split_data(scaled, n_lags, n_features)
-	#actuals_train, actuals_val, actuals_test = train_X[:, -1, 0], val_X[:, -1, 0], test_X[:, -1, 0]
-	#nexts_train, nexts_val, nexts_test = train_y.copy(), val_y.copy(), test_y.copy()
-	#train_y = (train_X[:, -1, 0] <= train_y).astype(np.int32)
-	#val_y = (val_X[:, -1, 0] <= val_y).astype(np.int32)
-	#test_y = (test_X[:, -1, 0] <= test_y).astype(np.int32)
+	train_X_inv, val_X_inv, test_X_inv, train_y_inv, val_y_inv, test_y_inv = utils.split_data_without_lags(df.values, n_lags, n_features)
+	train_rewards = (train_y_inv - train_X_inv[:, -n_features]) / train_X_inv[:, -n_features]
+	val_rewards = (val_y_inv - val_X_inv[:, -n_features]) / val_X_inv[:, -n_features]
+	test_rewards = (test_y_inv - test_X_inv[:, -n_features]) / test_X_inv[:, -n_features]
+	train_rewards = np.array([-train_rewards, train_rewards]).T
+	val_rewards = np.array([-val_rewards, val_rewards]).T
+	test_rewards = np.array([-test_rewards, test_rewards]).T
+	train_X, val_X, test_X, train_y, val_y, test_y = utils.split_data_without_lags(scaled, n_lags, n_features)
 
-	import predictor
+	model = Model(n_features*n_lags, n_lags, lr, n_hidden, refresh_rate, n_classes)
 
-	predictor_instance = predictor.Predictor('adam', 'mse', (n_lags, n_features), train_X, train_y, val_X, val_y, 0)
+	preds_train = model.run(train_X, train_y, train_rewards, epsilon, gamma, n_epochs)
 
-	predictor_instance.predict_and_train(train_X, train_y)
-	preds_test, models_hist, regret_hist = predictor_instance.predict_and_train(test_X, test_y)
+	preds_val = model.run(val_X, val_y, val_rewards, epsilon, gamma, 1)
 
-	plt.figure()
-	plt.plot(np.cumsum(regret_hist), label='actual regret')
-	plt.plot(np.arange(len(regret_hist)), label='100 %% regret')
-	plt.plot([0.0, len(regret_hist)], [0.0, len(regret_hist)/2.0], label='50 %% regret')
-	plt.title('cumulative training regret')
-	plt.xlabel('$t$')
-	plt.ylabel('regret')
-	plt.legend()
+	preds_test = model.run(test_X, test_y, test_rewards, epsilon, gamma, 1)
+
+	#print(preds_train)
+
+	acum_reward_train, historic_reward_train = utils.get_total_reward(train_X_inv[:, -n_features], train_y_inv, preds_train)
+	acum_reward_val, historic_reward_val = utils.get_total_reward(val_X_inv[:, -n_features], val_y_inv, preds_val)
+	acum_reward_test, historic_reward_test = utils.get_total_reward(test_X_inv[:, -n_features], test_y_inv, preds_test)
+	print('training final reward: ', acum_reward_train)
+	print('validation final reward: ', acum_reward_val)
+	print('test final reward: ', acum_reward_test)
+
+	from matplotlib import pyplot as plt
+
+	plt.subplot(2,1,1)
+	plt.plot(historic_reward_val)
+	plt.suptitle('validation results')
+
+	plt.subplot(2,1,2)
+	plt.plot(historic_reward_test)
+	plt.suptitle('testing results')
+
 	plt.show()
 
-	sns.barplot(pd.value_counts(models_hist).index, pd.value_counts(models_hist).values)
-	plt.title('model selection distribution')
-	plt.ylabel('count')
-	plt.xlabel('model')
-	plt.show()
 
-	from sklearn.metrics import accuracy_score
 
-	print('\n\n test score: ', accuracy_score(preds_test, test_y), end='\n\n')
-
-	limit = -1
-	#acum_reward, historic_reward = utils.get_total_reward(actuals_val[:limit], nexts_val[:limit], preds_val[:limit])
-	acum_reward, historic_reward = utils.get_total_reward(actuals_test[:limit], nexts_test[:limit], preds_test[:limit])
-	plt.plot(historic_reward)
-	plt.show()
-	print('total reward: ', acum_reward)
