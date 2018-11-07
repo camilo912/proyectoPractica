@@ -11,7 +11,7 @@ def get_next_state(state, next_ob, action):
 class Model():
 	def __init__(self, n_features, n_lags, lr, n_hidden, refresh_rate, n_classes):
 		from keras.models import Sequential
-		from keras.layers import Dense
+		from keras.layers import Dense, Dropout, MaxPooling1D, Reshape, Flatten, Conv1D
 		from keras.optimizers import Adam
 
 		self.n_features = n_features
@@ -22,7 +22,26 @@ class Model():
 		self.n_classes = n_classes
 
 		self.model = Sequential()
-		self.model.add(Dense(n_hidden, input_dim=(n_features + 1), activation='tanh'))
+		self.model.add(Dense(n_hidden*3, activation='relu'))
+		#self.model.add(Dropout(0.5))
+		#self.model.add(Dense(n_hidden, activation='tanh'))
+		#self.model.add(Dropout(0.5))
+		#self.model.add(Reshape((n_hidden, 1)))
+		#self.model.add(Conv1D(64, 5))
+		#self.model.add(MaxPooling1D())
+		#self.model.add(Conv1D(32, 5))
+		#self.model.add(Conv1D(32, 5))
+		#self.model.add(Flatten())
+		self.model.add(Dense(n_hidden, activation='relu'))
+		#self.model.add(Dropout(0.5))
+		self.model.add(Dense(n_hidden*2, activation='relu'))
+		#self.model.add(Dropout(0.5))
+		self.model.add(Dense(int(n_hidden/2), activation='tanh'))
+		self.model.add(Dense(n_hidden, activation='tanh'))
+		self.model.add(Dense(n_hidden, activation='tanh'))
+		self.model.add(Dense(n_hidden, activation='tanh'))
+		self.model.add(Dense(n_hidden, activation='tanh'))
+		self.model.add(Dense(n_hidden, activation='tanh'))
 		self.model.add(Dense(n_classes))
 
 		self.opt=Adam(lr=lr)
@@ -30,7 +49,7 @@ class Model():
 
 
 	def run(self, X, Y, rewards, epsilon, gamma, n_epochs):
-		last_position=0
+		last_position=1
 		if(not hasattr(self, 'future_model')): self.future_model = Model(self.n_features, self.n_lags, self.lr, self.n_hidden, self.refresh_rate, self.n_classes)
 		for epoch in range(n_epochs):
 			preds = []

@@ -300,19 +300,22 @@ if __name__ == '__main__':
 
 	from q_learning_models import Model
 
-	df = pd.read_csv('data/datos_proyecto.csv', header=0)
+	# df = pd.read_csv('data/datos_proyecto.csv', header=0)
+	df = pd.read_csv('data/datos_liquidez_nuevos.csv', header=0, index_col=0)
+	df = df[['Merval', 'Spread', 'Valor transado (promedio)', 'LIX']]
+	# df = df[['Merval', 'Spread', 'Valor transado (suma)', 'LIX']]
 
 	scaled, scaler = utils.normalize_data(df.values)
 
 	n_features = scaled.shape[1]
 	n_lags = 30
 	lr= 1e-3
-	n_hidden = 150
+	n_hidden = 100
 	epsilon = 0.1
 	gamma = 0.95
-	refresh_rate = 10
+	refresh_rate = 50
 	n_classes = 2
-	n_epochs = 1
+	n_epochs = 10
 
 	train_X_inv, val_X_inv, test_X_inv, train_y_inv, val_y_inv, test_y_inv = utils.split_data_without_lags(df.values, n_lags, n_features)
 	train_rewards = (train_y_inv - train_X_inv[:, -n_features]) / train_X_inv[:, -n_features]
