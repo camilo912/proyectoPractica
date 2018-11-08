@@ -215,3 +215,10 @@ def get_total_reward(actuals, nexts, preds):
 		historic_reward.append(reward)
 
 	return reward, historic_reward
+
+def count_signals(serie):
+	cont = 0
+	for i in range(len(serie)-1):
+		if(serie[i] != serie[i+1]): cont += 1
+
+	return cont

@@ -37,11 +37,14 @@ class Model():
 
 		self.model = Sequential()
 		self.model.add(LSTM(n_hidden, input_shape=(n_lags, n_features+1), return_sequences=True))
+		#self.model.add(Dropout(0.5))
+		#self.model.add(LSTM(n_hidden, return_sequences=True))
 		self.model.add(Dropout(0.5))
 		self.model.add(LSTM(n_hidden))
 		self.model.add(Dropout(0.5))
 		self.model.add(Dense(n_hidden, activation='tanh'))
 		self.model.add(Dropout(0.5))
+		#self.model.add(Dense(n_hidden, activation='tanh'))
 		self.model.add(Dense(n_classes))
 
 		# self.model = Sequential()
@@ -73,15 +76,17 @@ class Model():
 
 	def run(self, X, Y, rewards, epsilon, gamma, n_epochs):
 		last_position=0
-		if(not hasattr(self, 'future_model')): self.future_model = Model(self.n_features, self.n_lags, self.lr, self.n_hidden, self.refresh_rate, self.n_classes)
+		if(not hasattr(self, 'future_model')): 
+			self.future_model = Model(self.n_features, self.n_lags, self.lr, self.n_hidden, self.refresh_rate, self.n_classes)
+			print('creado modelo futuro')
 		for epoch in range(n_epochs):
 			preds = []
 			state = np.insert(X[0], 0, last_position, axis=X[0].ndim-1)
 			for i in range(len(X) - 1):
-				action, _ = self.choose_action(state, epsilon)
+				action, target = self.choose_action(state, epsilon)
 				next_state = get_next_state(state, X[i+1, -1], action)
 				q = rewards[i, action] + gamma*(max(self.future_model.predict(next_state).ravel()))
-				target = rewards[i].squeeze()
+				#target = self.model.predict() # rewards[i].squeeze()
 				target[action] = q
 				self.model.fit(np.expand_dims(state, axis=0), np.expand_dims(target, axis=0), epochs=1, verbose=0)
 
@@ -107,8 +112,8 @@ class Model():
 		P = [(1-epsilon)*(action==action_max) + epsilon/self.n_classes for action in range(self.n_classes)]
 		# select an action
 		chosen_action = np.random.choice(np.arange(self.n_classes), p=P)
-		pred = preds[chosen_action]
-		return chosen_action, pred
+		#pred = preds[chosen_action]
+		return chosen_action, preds
 
 	def predict(self, x):
 		return self.model.predict(np.expand_dims(x, axis=0))

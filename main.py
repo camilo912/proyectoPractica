@@ -308,14 +308,14 @@ if __name__ == '__main__':
 	scaled, scaler = utils.normalize_data(df.values)
 
 	n_features = scaled.shape[1]
-	n_lags = 30
+	n_lags = 10
 	lr= 1e-3
 	n_hidden = 100
 	epsilon = 0.1
 	gamma = 0.95
-	refresh_rate = 50
+	refresh_rate = 150
 	n_classes = 2
-	n_epochs = 1
+	n_epochs = 50
 
 	# train_X_inv, val_X_inv, test_X_inv, train_y_inv, val_y_inv, test_y_inv = utils.split_data_without_lags(df.values, n_lags, n_features)
 	# train_rewards = (train_y_inv - train_X_inv[:, -n_features]) / train_X_inv[:, -n_features]
@@ -334,6 +334,36 @@ if __name__ == '__main__':
 	val_rewards = np.array([-val_rewards, val_rewards]).T
 	test_rewards = np.array([-test_rewards, test_rewards]).T
 	train_X, val_X, test_X, train_y, val_y, test_y = utils.split_data(scaled, n_lags, n_features)
+
+	
+
+	# rewards = []
+
+	# for _ in range(10):
+	# 	model = Model(n_features, n_lags, lr, n_hidden, refresh_rate, n_classes)
+
+	# 	preds_train = model.run(train_X, train_y, train_rewards, epsilon, gamma, n_epochs)
+
+	# 	preds_val = model.run(val_X, val_y, val_rewards, epsilon, gamma, 1)
+
+	# 	preds_test = model.run(test_X, test_y, test_rewards, epsilon, gamma, 1)
+
+	# 	#print(preds_train)
+
+	# 	#acum_reward_train, historic_reward_train = utils.get_total_reward(train_X_inv[:, -n_features], train_y_inv, preds_train)
+	# 	#acum_reward_val, historic_reward_val = utils.get_total_reward(val_X_inv[:, -n_features], val_y_inv, preds_val)
+	# 	#acum_reward_test, historic_reward_test = utils.get_total_reward(test_X_inv[:, -n_features], test_y_inv, preds_test)
+	# 	acum_reward_train, historic_reward_train = utils.get_total_reward(train_X_inv[:, -1, 0], train_y_inv, preds_train)
+	# 	acum_reward_val, historic_reward_val = utils.get_total_reward(val_X_inv[:, -1, 0], val_y_inv, preds_val)
+	# 	acum_reward_test, historic_reward_test = utils.get_total_reward(test_X_inv[:, -1, 0], test_y_inv, preds_test)
+
+	# 	rewards.append(acum_reward_test)
+
+	# print(rewards)
+	# print(np.mean(rewards))
+
+	
+
 
 	# model = Model(n_features*n_lags, n_lags, lr, n_hidden, refresh_rate, n_classes)
 	model = Model(n_features, n_lags, lr, n_hidden, refresh_rate, n_classes)
@@ -355,6 +385,7 @@ if __name__ == '__main__':
 	print('training final reward: ', acum_reward_train)
 	print('validation final reward: ', acum_reward_val)
 	print('test final reward: ', acum_reward_test)
+	print('signals in test: ', utils.count_signals(preds_test))
 
 	from matplotlib import pyplot as plt
 
