@@ -35,40 +35,42 @@ class Model():
 		self.refresh_rate = refresh_rate
 		self.n_classes = n_classes
 
-		self.model = Sequential()
-		self.model.add(LSTM(n_hidden, input_shape=(n_lags, n_features+1), return_sequences=True))
-		#self.model.add(Dropout(0.5))
-		#self.model.add(LSTM(n_hidden, return_sequences=True))
-		self.model.add(Dropout(0.5))
-		self.model.add(LSTM(n_hidden))
-		self.model.add(Dropout(0.5))
-		self.model.add(Dense(n_hidden, activation='tanh'))
-		self.model.add(Dropout(0.5))
-		#self.model.add(Dense(n_hidden, activation='tanh'))
-		self.model.add(Dense(n_classes))
-
 		# self.model = Sequential()
-		# self.model.add(Dense(n_hidden*3, activation='relu'))
+		# self.model.add(LSTM(n_hidden, input_shape=(n_lags, n_features+1), return_sequences=True))
 		# #self.model.add(Dropout(0.5))
-		# #self.model.add(Dense(n_hidden, activation='tanh'))
+		# self.model.add(LSTM(n_hidden, return_sequences=True))
 		# #self.model.add(Dropout(0.5))
-		# #self.model.add(Reshape((n_hidden, 1)))
-		# #self.model.add(Conv1D(64, 5))
-		# #self.model.add(MaxPooling1D())
-		# #self.model.add(Conv1D(32, 5))
-		# #self.model.add(Conv1D(32, 5))
-		# #self.model.add(Flatten())
-		# self.model.add(Dense(n_hidden, activation='relu'))
+		# self.model.add(LSTM(n_hidden))
 		# #self.model.add(Dropout(0.5))
-		# self.model.add(Dense(n_hidden*2, activation='relu'))
+		# self.model.add(Dense(n_hidden, activation='tanh'))
 		# #self.model.add(Dropout(0.5))
-		# self.model.add(Dense(int(n_hidden/2), activation='tanh'))
-		# self.model.add(Dense(n_hidden, activation='tanh'))
-		# self.model.add(Dense(n_hidden, activation='tanh'))
-		# self.model.add(Dense(n_hidden, activation='tanh'))
-		# self.model.add(Dense(n_hidden, activation='tanh'))
 		# self.model.add(Dense(n_hidden, activation='tanh'))
 		# self.model.add(Dense(n_classes))
+
+		self.model = Sequential()
+		#self.model.add(Flatten())
+		#self.model.add(Dense(n_hidden*3, activation='relu'))
+		#self.model.add(Dropout(0.5))
+		#self.model.add(Dense(n_hidden, activation='tanh'))
+		#self.model.add(Dropout(0.5))
+		#self.model.add(Reshape((n_hidden, 1)))
+		self.model.add(Conv1D(64, 5))
+		self.model.add(MaxPooling1D())
+		self.model.add(Conv1D(32, 4))
+		#self.model.add(MaxPooling1D())
+		self.model.add(Conv1D(32, 4))
+		self.model.add(Flatten())
+		self.model.add(Dense(n_hidden, activation='relu'))
+		#self.model.add(Dropout(0.5))
+		self.model.add(Dense(n_hidden*2, activation='relu'))
+		#self.model.add(Dropout(0.5))
+		self.model.add(Dense(int(n_hidden/2), activation='tanh'))
+		#self.model.add(Dense(n_hidden, activation='tanh'))
+		#self.model.add(Dense(n_hidden, activation='tanh'))
+		#self.model.add(Dense(n_hidden, activation='tanh'))
+		#self.model.add(Dense(n_hidden, activation='tanh'))
+		#self.model.add(Dense(n_hidden, activation='tanh'))
+		self.model.add(Dense(n_classes))
 
 		self.opt=Adam(lr=lr)
 		self.model.compile(loss='mse', optimizer=self.opt)
@@ -82,16 +84,25 @@ class Model():
 		for epoch in range(n_epochs):
 			preds = []
 			state = np.insert(X[0], 0, last_position, axis=X[0].ndim-1)
+			#inputs = []
+			#outputs = []
 			for i in range(len(X) - 1):
 				action, target = self.choose_action(state, epsilon)
 				next_state = get_next_state(state, X[i+1, -1], action)
-				q = rewards[i, action] + gamma*(max(self.future_model.predict(next_state).ravel()))
+				# normal q learning
+				#q = rewards[i, action] + gamma*(max(self.future_model.predict(next_state).ravel()))
+				# double q learning
+				q = rewards[i, action] + gamma*(self.future_model.predict(next_state).ravel()[np.argmax(self.model.predict(np.expand_dims(state, axis=0)).ravel())])
 				#target = self.model.predict() # rewards[i].squeeze()
+				if(action != state[-1, 0]): q -= np.abs(q*0.1)
 				target[action] = q
 				self.model.fit(np.expand_dims(state, axis=0), np.expand_dims(target, axis=0), epochs=1, verbose=0)
+				#inputs.append(state)
+				#outputs.append(target)
 
 				if(i % self.refresh_rate == 0):
 					self.future_model.set_weights(self.model.get_weights())
+					# self.future_model.model.fit(np.array(inputs), np.array(outputs), epochs=self.refresh_rate, verbose=0)
 
 				preds.append(action)
 				last_position = action

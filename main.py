@@ -308,14 +308,14 @@ if __name__ == '__main__':
 	scaled, scaler = utils.normalize_data(df.values)
 
 	n_features = scaled.shape[1]
-	n_lags = 10
+	n_lags = 30
 	lr= 1e-3
-	n_hidden = 100
+	n_hidden = 150
 	epsilon = 0.1
-	gamma = 0.95
-	refresh_rate = 150
+	gamma = 0.9
+	refresh_rate = 30
 	n_classes = 2
-	n_epochs = 50
+	n_epochs = 1
 
 	# train_X_inv, val_X_inv, test_X_inv, train_y_inv, val_y_inv, test_y_inv = utils.split_data_without_lags(df.values, n_lags, n_features)
 	# train_rewards = (train_y_inv - train_X_inv[:, -n_features]) / train_X_inv[:, -n_features]
@@ -362,41 +362,66 @@ if __name__ == '__main__':
 	# print(rewards)
 	# print(np.mean(rewards))
 
-	
 
+	total_X = np.append(val_X, test_X, axis=0)
+	total_y = np.append(val_y, test_y, axis=0)
+	total_rewards = np.append(val_rewards, test_rewards, axis=0)
+	total_X_inv = np.append(val_X_inv, test_X_inv, axis=0)
+	total_y_inv = np.append(val_y_inv, test_y_inv, axis=0)
+	
+	# total_X = np.append(np.append(train_X, val_X, axis=0), test_X, axis=0)
+	# total_y = np.append(np.append(train_y, val_y, axis=0), test_y, axis=0)
+	# total_rewards = np.append(np.append(train_rewards, val_rewards, axis=0), test_rewards, axis=0)
+	# total_X_inv = np.append(np.append(train_X_inv, val_X_inv, axis=0), test_X_inv, axis=0)
+	# total_y_inv = np.append(np.append(train_y_inv, val_y_inv, axis=0), test_y_inv, axis=0)
 
 	# model = Model(n_features*n_lags, n_lags, lr, n_hidden, refresh_rate, n_classes)
 	model = Model(n_features, n_lags, lr, n_hidden, refresh_rate, n_classes)
 
-	preds_train = model.run(train_X, train_y, train_rewards, epsilon, gamma, n_epochs)
 
-	preds_val = model.run(val_X, val_y, val_rewards, epsilon, gamma, 1)
 
-	preds_test = model.run(test_X, test_y, test_rewards, epsilon, gamma, 1)
+	# preds_train = model.run(train_X, train_y, train_rewards, epsilon, gamma, n_epochs)
+
+	# preds_val = model.run(val_X, val_y, val_rewards, epsilon, gamma, 1)
+
+	# preds_test = model.run(test_X, test_y, test_rewards, epsilon, gamma, 1)
+
+	preds_train = model.run(train_X, train_y, train_rewards, epsilon, gamma, 1)
+
+	preds_total = model.run(total_X, total_y, total_rewards, epsilon, gamma, n_epochs)
 
 	#print(preds_train)
 
 	#acum_reward_train, historic_reward_train = utils.get_total_reward(train_X_inv[:, -n_features], train_y_inv, preds_train)
 	#acum_reward_val, historic_reward_val = utils.get_total_reward(val_X_inv[:, -n_features], val_y_inv, preds_val)
 	#acum_reward_test, historic_reward_test = utils.get_total_reward(test_X_inv[:, -n_features], test_y_inv, preds_test)
-	acum_reward_train, historic_reward_train = utils.get_total_reward(train_X_inv[:, -1, 0], train_y_inv, preds_train)
-	acum_reward_val, historic_reward_val = utils.get_total_reward(val_X_inv[:, -1, 0], val_y_inv, preds_val)
-	acum_reward_test, historic_reward_test = utils.get_total_reward(test_X_inv[:, -1, 0], test_y_inv, preds_test)
-	print('training final reward: ', acum_reward_train)
-	print('validation final reward: ', acum_reward_val)
-	print('test final reward: ', acum_reward_test)
-	print('signals in test: ', utils.count_signals(preds_test))
+	
+	#acum_reward_train, historic_reward_train = utils.get_total_reward(train_X_inv[:, -1, 0], train_y_inv, preds_train)
+	#acum_reward_val, historic_reward_val = utils.get_total_reward(val_X_inv[:, -1, 0], val_y_inv, preds_val)
+	#acum_reward_test, historic_reward_test = utils.get_total_reward(test_X_inv[:, -1, 0], test_y_inv, preds_test)
+	
+	acum_reward_total, historic_reward_total = utils.get_total_reward(total_X_inv[:, -1, 0], total_y_inv, preds_total)
+	
+	#print('training final reward: ', acum_reward_train)
+	#print('validation final reward: ', acum_reward_val)
+	#print('test final reward: ', acum_reward_test)
+	print('total final reward: ', acum_reward_total)
+	#print('signals in test: ', utils.count_signals(preds_test))
+	print('signals in total: ', utils.count_signals(preds_total))
 
 	from matplotlib import pyplot as plt
 
-	plt.subplot(2,1,1)
-	plt.plot(historic_reward_val)
-	plt.suptitle('validation results')
+	#plt.subplot(2,1,1)
+	#plt.plot(historic_reward_val)
+	#plt.suptitle('validation results')
 
-	plt.subplot(2,1,2)
-	plt.plot(historic_reward_test)
-	plt.suptitle('testing results')
+	#plt.subplot(2,1,2)
+	#plt.plot(historic_reward_test)
+	#plt.suptitle('testing results')
 
+	#plt.show()
+
+	plt.plot(historic_reward_total)
 	plt.show()
 
 
