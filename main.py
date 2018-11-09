@@ -301,8 +301,9 @@ if __name__ == '__main__':
 	from q_learning_models import Model
 
 	# df = pd.read_csv('data/datos_proyecto.csv', header=0)
-	df = pd.read_csv('data/datos_liquidez_nuevos.csv', header=0, index_col=0)#, nrows=1000)
+	df = pd.read_csv('data/datos_liquidez_nuevos.csv', header=0, index_col=0)#, nrows=300)
 	df = df[['Merval', 'Spread', 'Valor transado (promedio)', 'LIX']]
+	#df = df.loc[:1250, :]
 	# df = df[['Merval', 'Spread', 'Valor transado (suma)', 'LIX']]
 
 	scaled, scaler = utils.normalize_data(df.values)
@@ -312,10 +313,10 @@ if __name__ == '__main__':
 	lr= 1e-3
 	n_hidden = 150
 	epsilon = 0.1
-	gamma = 0.9
+	gamma = 0.5
 	refresh_rate = 30
 	n_classes = 2
-	n_epochs = 1
+	n_epochs = 100
 
 	# train_X_inv, val_X_inv, test_X_inv, train_y_inv, val_y_inv, test_y_inv = utils.split_data_without_lags(df.values, n_lags, n_features)
 	# train_rewards = (train_y_inv - train_X_inv[:, -n_features]) / train_X_inv[:, -n_features]
@@ -386,9 +387,9 @@ if __name__ == '__main__':
 
 	# preds_test = model.run(test_X, test_y, test_rewards, epsilon, gamma, 1)
 
-	preds_train = model.run(train_X, train_y, train_rewards, epsilon, gamma, n_epochs)
+	preds_train = model.run(train_X, train_y, train_rewards, epsilon, gamma, n_epochs, True)
 
-	preds_total = model.run(total_X, total_y, total_rewards, epsilon, gamma, 1)
+	preds_total = model.run(total_X, total_y, total_rewards, epsilon, gamma, 1, False)
 
 	#print(preds_train)
 

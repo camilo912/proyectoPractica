@@ -64,6 +64,7 @@ def split_data(values, n_lags, n_features, n_out=1):
 
 	return train_X, val_X, test_X, train_y, val_y, test_y
 
+
 def split_data_without_lags(values, n_lags, n_features):
 	reframed = series_to_supervised(values, n_lags, 1).values
 	wall = int(reframed.shape[0]*0.6)
@@ -222,3 +223,6 @@ def count_signals(serie):
 		if(serie[i] != serie[i+1]): cont += 1
 
 	return cont
+
+def get_rewards(X, y):
+	return (y - X[:, -1, 0]) / X[:, -1, 0]
