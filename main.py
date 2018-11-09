@@ -301,7 +301,7 @@ if __name__ == '__main__':
 	from q_learning_models import Model
 
 	# df = pd.read_csv('data/datos_proyecto.csv', header=0)
-	df = pd.read_csv('data/datos_liquidez_nuevos.csv', header=0, index_col=0)
+	df = pd.read_csv('data/datos_liquidez_nuevos.csv', header=0, index_col=0)#, nrows=1000)
 	df = df[['Merval', 'Spread', 'Valor transado (promedio)', 'LIX']]
 	# df = df[['Merval', 'Spread', 'Valor transado (suma)', 'LIX']]
 
@@ -335,7 +335,7 @@ if __name__ == '__main__':
 	test_rewards = np.array([-test_rewards, test_rewards]).T
 	train_X, val_X, test_X, train_y, val_y, test_y = utils.split_data(scaled, n_lags, n_features)
 
-	
+	# print(len(train_X))
 
 	# rewards = []
 
@@ -386,9 +386,9 @@ if __name__ == '__main__':
 
 	# preds_test = model.run(test_X, test_y, test_rewards, epsilon, gamma, 1)
 
-	preds_train = model.run(train_X, train_y, train_rewards, epsilon, gamma, 1)
+	preds_train = model.run(train_X, train_y, train_rewards, epsilon, gamma, n_epochs)
 
-	preds_total = model.run(total_X, total_y, total_rewards, epsilon, gamma, n_epochs)
+	preds_total = model.run(total_X, total_y, total_rewards, epsilon, gamma, 1)
 
 	#print(preds_train)
 

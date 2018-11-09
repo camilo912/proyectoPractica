@@ -24,9 +24,10 @@ def get_next_state(state, next_ob, action):
 
 class Model():
 	def __init__(self, n_features, n_lags, lr, n_hidden, refresh_rate, n_classes):
-		from keras.models import Sequential
-		from keras.layers import Dense, Dropout, MaxPooling1D, Reshape, Flatten, Conv1D, LSTM
+		from keras.models import Sequential, Model
+		from keras.layers import Dense, Dropout, MaxPooling1D, Reshape, Flatten, Conv1D, LSTM, Input, subtract, average, add, Lambda
 		from keras.optimizers import Adam
+		from keras import backend as K
 
 		self.n_features = n_features
 		self.n_hidden = n_hidden
@@ -47,30 +48,50 @@ class Model():
 		# self.model.add(Dense(n_hidden, activation='tanh'))
 		# self.model.add(Dense(n_classes))
 
-		self.model = Sequential()
-		#self.model.add(Flatten())
-		#self.model.add(Dense(n_hidden*3, activation='relu'))
-		#self.model.add(Dropout(0.5))
-		#self.model.add(Dense(n_hidden, activation='tanh'))
-		#self.model.add(Dropout(0.5))
-		#self.model.add(Reshape((n_hidden, 1)))
-		self.model.add(Conv1D(64, 5))
-		self.model.add(MaxPooling1D())
-		self.model.add(Conv1D(32, 4))
-		#self.model.add(MaxPooling1D())
-		self.model.add(Conv1D(32, 4))
-		self.model.add(Flatten())
-		self.model.add(Dense(n_hidden, activation='relu'))
-		#self.model.add(Dropout(0.5))
-		self.model.add(Dense(n_hidden*2, activation='relu'))
-		#self.model.add(Dropout(0.5))
-		self.model.add(Dense(int(n_hidden/2), activation='tanh'))
-		#self.model.add(Dense(n_hidden, activation='tanh'))
-		#self.model.add(Dense(n_hidden, activation='tanh'))
-		#self.model.add(Dense(n_hidden, activation='tanh'))
-		#self.model.add(Dense(n_hidden, activation='tanh'))
-		#self.model.add(Dense(n_hidden, activation='tanh'))
-		self.model.add(Dense(n_classes))
+		# self.model = Sequential()
+		# #self.model.add(Flatten())
+		# #self.model.add(Dense(n_hidden*3, activation='relu'))
+		# #self.model.add(Dropout(0.5))
+		# #self.model.add(Dense(n_hidden, activation='tanh'))
+		# #self.model.add(Dropout(0.5))
+		# #self.model.add(Reshape((n_hidden, 1)))
+		# self.model.add(Conv1D(64, 5))
+		# self.model.add(MaxPooling1D())
+		# self.model.add(Conv1D(32, 4))
+		# #self.model.add(MaxPooling1D())
+		# self.model.add(Conv1D(32, 4))
+		# self.model.add(Flatten())
+		# self.model.add(Dense(n_hidden, activation='relu'))
+		# #self.model.add(Dropout(0.5))
+		# self.model.add(Dense(n_hidden*2, activation='relu'))
+		# #self.model.add(Dropout(0.5))
+		# self.model.add(Dense(int(n_hidden/2), activation='tanh'))
+		# #self.model.add(Dense(n_hidden, activation='tanh'))
+		# #self.model.add(Dense(n_hidden, activation='tanh'))
+		# #self.model.add(Dense(n_hidden, activation='tanh'))
+		# #self.model.add(Dense(n_hidden, activation='tanh'))
+		# #self.model.add(Dense(n_hidden, activation='tanh'))
+		# self.model.add(Dense(n_classes))
+
+		a0 = Input(shape=(n_lags, n_features+1))
+		a1 = Conv1D(64, 5)(a0)
+		a2 = MaxPooling1D()(a1)
+		a3 = Conv1D(32, 4)(a2)
+		a = Conv1D(32, 4)(a3)
+		b = Flatten()(a)
+		c0 = Dense(n_hidden, activation='relu')(b)
+		c = Dense(n_hidden*2, activation='relu')(c0)
+		d = Dense(int(n_hidden/2), activation='tanh')(c)
+		fc_value = Dense(n_hidden, activation='tanh')(d)
+		value = Dense(1, activation='tanh')(fc_value)
+		fc_advantage = Dense(n_hidden, activation='tanh')(d)
+		advantage = Dense(n_classes, activation='tanh')(fc_advantage)
+		avg = Lambda(lambda x: K.mean(x, axis=1, keepdims=True))(advantage)
+		out = Lambda(lambda a: a[0] + (a[1] - a[2]))([value, advantage, avg])
+		self.model = Model(inputs=a0, outputs=out)
+
+
+
 
 		self.opt=Adam(lr=lr)
 		self.model.compile(loss='mse', optimizer=self.opt)
@@ -90,11 +111,11 @@ class Model():
 				action, target = self.choose_action(state, epsilon)
 				next_state = get_next_state(state, X[i+1, -1], action)
 				# normal q learning
-				#q = rewards[i, action] + gamma*(max(self.future_model.predict(next_state).ravel()))
+				q = rewards[i, action] + gamma*(max(self.future_model.predict(next_state).ravel()))
 				# double q learning
-				q = rewards[i, action] + gamma*(self.future_model.predict(next_state).ravel()[np.argmax(self.model.predict(np.expand_dims(state, axis=0)).ravel())])
+				#q = rewards[i, action] + gamma*(self.future_model.predict(next_state).ravel()[np.argmax(self.model.predict(np.expand_dims(state, axis=0)).ravel())])
 				#target = self.model.predict() # rewards[i].squeeze()
-				if(action != state[-1, 0]): q -= np.abs(q*0.1)
+				#if(action != state[-1, 0]): q -= np.abs(q*0.1)
 				target[action] = q
 				self.model.fit(np.expand_dims(state, axis=0), np.expand_dims(target, axis=0), epochs=1, verbose=0)
 				#inputs.append(state)
@@ -117,6 +138,7 @@ class Model():
 	def choose_action(self, state, epsilon):
 		# make predictions
 		preds = self.model.predict(np.expand_dims(state, axis=0)).ravel()
+		# print(preds.shape)
 		# get best q
 		action_max = np.argmax(preds)
 		# create action selection probabilities
