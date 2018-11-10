@@ -127,7 +127,7 @@ class Model():
 				# normal q learning
 				q = rewards[i, action] + gamma*(max(self.future_model.predict(next_state).ravel()))
 				# double q learning
-				# q = rewards[i, action] + gamma*(self.future_model.predict(next_state).ravel()[np.argmax(self.model.predict(np.expand_dims(state, axis=0)).ravel())])
+				# q = rewards[i, action] + gamma*(self.future_model.predict(next_state).ravel()[np.argmax(self.model.predict(np.expand_dims(next_state, axis=0)).ravel())])
 				#target = self.model.predict() # rewards[i].squeeze()
 				#if(action != state[-1, 0]): q -= np.abs(q*0.1)
 				target[action] = q

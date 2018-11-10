@@ -226,3 +226,12 @@ def count_signals(serie):
 
 def get_rewards(X, y):
 	return (y - X[:, -1, 0]) / X[:, -1, 0]
+
+def get_buy_and_hold_reward(rewards):
+	rode = 1
+	historic_rode = []
+	for i in range(len(rewards)):
+		rode = rode*(1+rewards[i])
+		historic_rode.append(rode)
+
+	return rode, historic_rode

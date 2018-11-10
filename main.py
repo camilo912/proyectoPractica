@@ -303,7 +303,7 @@ if __name__ == '__main__':
 	# df = pd.read_csv('data/datos_proyecto.csv', header=0)
 	df = pd.read_csv('data/datos_liquidez_nuevos.csv', header=0, index_col=0)#, nrows=300)
 	df = df[['Merval', 'Spread', 'Valor transado (promedio)', 'LIX']]
-	#df = df.loc[:1250, :]
+	# df = df.loc[:1250, :]
 	# df = df[['Merval', 'Spread', 'Valor transado (suma)', 'LIX']]
 
 	scaled, scaler = utils.normalize_data(df.values)
@@ -313,7 +313,7 @@ if __name__ == '__main__':
 	lr= 1e-3
 	n_hidden = 150
 	epsilon = 0.1
-	gamma = 0.5
+	gamma = 0.9
 	refresh_rate = 30
 	n_classes = 2
 	n_epochs = 80
@@ -402,11 +402,13 @@ if __name__ == '__main__':
 	#acum_reward_test, historic_reward_test = utils.get_total_reward(test_X_inv[:, -1, 0], test_y_inv, preds_test)
 	
 	acum_reward_total, historic_reward_total = utils.get_total_reward(total_X_inv[:, -1, 0], total_y_inv, preds_total)
+	acum_reward_buy_and_hold_total, historic_buy_and_hold_reward_total = utils.get_buy_and_hold_reward(total_rewards[:, 1])
 	
 	#print('training final reward: ', acum_reward_train)
 	#print('validation final reward: ', acum_reward_val)
 	#print('test final reward: ', acum_reward_test)
 	print('total final reward: ', acum_reward_total)
+	print('total buy and hold reward: ', acum_reward_buy_and_hold_total)
 	#print('signals in test: ', utils.count_signals(preds_test))
 	print('signals in total: ', utils.count_signals(preds_total))
 
@@ -422,7 +424,9 @@ if __name__ == '__main__':
 
 	#plt.show()
 
-	plt.plot(historic_reward_total)
+	plt.plot(historic_reward_total, label='algorithm reward')
+	plt.plot(historic_buy_and_hold_reward_total, label='buy and hold reward')
+	plt.legend()
 	plt.show()
 
 
