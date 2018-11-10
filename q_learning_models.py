@@ -104,10 +104,14 @@ class Model():
 
 
 	def run(self, X, Y, rewards, epsilon, gamma, n_epochs, training):
+		#from keras.models import load_model
+		#self.model = load_model('model.h5')
+		#self.model.load_weights('model_weights.h5')
 		last_position=0
 		if(not hasattr(self, 'future_model')): 
 			self.future_model = Model(self.n_features, self.n_lags, self.lr, self.n_hidden, self.refresh_rate, self.n_classes)
 			print('creado modelo futuro')
+		self.future_model.set_weights(self.model.get_weights())
 		if(training):
 			ori_X = X.copy()
 			ori_Y = Y.copy()
@@ -143,6 +147,8 @@ class Model():
 				last_position = action
 				state = next_state
 
+		# self.model.save_weights('model_weights.h5')
+		self.model.save('model.h5')
 		return preds
 
 
