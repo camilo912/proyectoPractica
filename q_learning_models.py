@@ -108,10 +108,15 @@ class Model():
 		if(not hasattr(self, 'future_model')): 
 			self.future_model = Model(self.n_features, self.n_lags, self.lr, self.n_hidden, self.refresh_rate, self.n_classes)
 			print('creado modelo futuro')
+		if(training):
+			ori_X = X.copy()
+			ori_Y = Y.copy()
+			ori_rew = rewards.copy()
+			batch_size = int(len(X)*0.8)
 		for epoch in range(n_epochs):
 			if(training):
-				train_idxs = np.random.permutation(len(X))
-				X, Y, rewards = X[train_idxs], Y[train_idxs], rewards[train_idxs]
+				train_idxs = np.random.permutation(len(ori_X))[:batch_size]
+				X, Y, rewards = ori_X[train_idxs], ori_Y[train_idxs], ori_rew[train_idxs]
 			preds = []
 			state = np.insert(X[0], 0, last_position, axis=X[0].ndim-1)
 			#inputs = []

@@ -316,7 +316,7 @@ if __name__ == '__main__':
 	gamma = 0.5
 	refresh_rate = 30
 	n_classes = 2
-	n_epochs = 100
+	n_epochs = 80
 
 	# train_X_inv, val_X_inv, test_X_inv, train_y_inv, val_y_inv, test_y_inv = utils.split_data_without_lags(df.values, n_lags, n_features)
 	# train_rewards = (train_y_inv - train_X_inv[:, -n_features]) / train_X_inv[:, -n_features]
