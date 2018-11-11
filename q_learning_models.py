@@ -142,22 +142,28 @@ class Model():
 			explore = init_explore + decay_rate_explore
 		else:
 			explore = min_explore
-		last_position=0
+		actions = np.zeros((len(X)+X.shape[1]))
 		if(not hasattr(self, 'future_model')): 
 			self.future_model = Model(self.n_features, self.n_lags, self.lr, self.n_hidden, self.refresh_rate, self.n_classes)
 		self.future_model.set_weights(self.model.get_weights())
 		for epoch in range(n_epochs):
 			if(training):
 				if explore > min_explore: explore -= decay_rate_explore
-				train_idxs = np.random.permutation(len(ori_X))[:batch_size]
+				train_idxs = np.random.permutation(len(ori_X)-1)[:batch_size]
 				X, Y, rewards = ori_X[train_idxs], ori_Y[train_idxs], ori_rew[train_idxs]
+			else:
+				state = np.insert(X[0], 0, 0, axis=X[0].ndim-1)
 			preds = []
-			state = np.insert(X[0], 0, last_position, axis=X[0].ndim-1)
 			#inputs = []
 			#outputs = []
-			for i in range(len(X) - 1):
+			for i in range(len(X) - int(not training)):
+				if(training):
+					state = np.insert(X[i], 0, actions[train_idxs[i]:train_idxs[i]+X.shape[1]], axis=X[0].ndim-1)
 				action, target = self.choose_action(state, explore)
-				next_state = get_next_state(state, X[i+1, -1], action)
+				if(training):
+					next_state = get_next_state(state, ori_X[train_idxs[i]+1, -1], action)
+				else:
+					next_state = get_next_state(state, X[i+1, -1], action)
 				# normal q learning
 				# q = rewards[i, action] + gamma*(max(self.future_model.predict(next_state).ravel()))
 				# double q learning
@@ -174,8 +180,10 @@ class Model():
 					# self.future_model.model.fit(np.array(inputs), np.array(outputs), epochs=self.refresh_rate, verbose=0)
 
 				preds.append(action)
-				last_position = action
-				state = next_state
+				if(training): 
+					actions[train_idxs[i]+X.shape[1]] = action
+				else:
+					state = next_state
 
 		if training: 
 			self.model.save_weights('models_and_weights_saved/model_weights.h5')
@@ -201,3 +209,13 @@ class Model():
 
 	def predict(self, x):
 		return self.model.predict(np.expand_dims(x, axis=0))
+
+	def init_memory(self, X, Y, rewards):
+		self.memory = utils.Memory(len(X))
+		idxs = np.random.permutation(len(X))
+		X = X[idxs]
+		Y = Y[idxs]
+		rewards = rewards[idxs]
+		for i in range(len(X)):
+			self.memory.store([X[i], y[i], rewards[i]])
+
