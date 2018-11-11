@@ -68,14 +68,16 @@ if __name__ == '__main__':
 	scaled, scaler = utils.normalize_data(df.values)
 
 	n_features = scaled.shape[1]
-	n_lags = 30
-	lr= 1e-3
-	n_hidden = 150
-	epsilon = 0.1
+	n_lags = 10
+	lr = 1e-5
+	n_hidden = 512
+	min_explore = 0.1
+	init_explore = 1.0
 	gamma = 0.9
-	refresh_rate = 30
+	refresh_rate = 50
 	n_classes = 2
-	n_epochs = 80
+	n_epochs = 100
+	decay_rate_explore = init_explore/(n_epochs)*1.5
 
 	train_X_inv, val_X_inv, test_X_inv, train_y_inv, val_y_inv, test_y_inv = utils.split_data(df.values, n_lags, n_features)
 	train_rewards = (train_y_inv - train_X_inv[:, -1, 0]) / train_X_inv[:, -1, 0]
@@ -109,10 +111,9 @@ if __name__ == '__main__':
 
 	# preds_test = model.run(test_X, test_y, test_rewards, epsilon, gamma, 1)
 
-	preds_train = model.run(train_X, train_y, train_rewards, epsilon, gamma, n_epochs, True)
+	preds_train = model.run(train_X, train_y, train_rewards, gamma, n_epochs, True, init_explore, min_explore, decay_rate_explore)
 
-	preds_total = model.run(total_X, total_y, total_rewards, epsilon, gamma, 1, False)
-
+	preds_total = model.run(total_X, total_y, total_rewards, gamma, 1, False, init_explore, min_explore, decay_rate_explore)
 	#print(preds_train)
 
 	#acum_reward_train, historic_reward_train = utils.get_total_reward(train_X_inv[:, -n_features], train_y_inv, preds_train)
