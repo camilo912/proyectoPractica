@@ -68,15 +68,15 @@ if __name__ == '__main__':
 	scaled, scaler = utils.normalize_data(df.values)
 
 	n_features = scaled.shape[1]
-	n_lags = 10
-	lr = 1e-5
-	n_hidden = 512
+	n_lags = 15
+	lr = 1e-4
+	n_hidden = 100
 	min_explore = 0.1
 	init_explore = 1.0
 	gamma = 0.9
-	refresh_rate = 50
+	refresh_rate = 20
 	n_classes = 2
-	n_epochs = 100
+	n_epochs = 30
 	decay_rate_explore = init_explore/(n_epochs)*1.5
 
 	train_X_inv, val_X_inv, test_X_inv, train_y_inv, val_y_inv, test_y_inv = utils.split_data(df.values, n_lags, n_features)
