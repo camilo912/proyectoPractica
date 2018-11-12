@@ -37,14 +37,4 @@ class Model_predictor():
 
 		rmse = math.sqrt(mean_squared_error(test_y_inv, preds_inv))
 
-		return rmse, preds, test_y
-
-	def predict(self, values):
-		import numpy as np
-
-		preds = self.model.predict(values)
-		
-		# inverse the scaling
-		# preds = utils.inverse_transform(self.scaler, preds, self.n_features)
-
-		return preds
+		return rmse, preds_inv, test_y_inv

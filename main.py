@@ -8,50 +8,46 @@ from matplotlib import pyplot as plt
 
 
 if __name__ == '__main__':
-	# ######################################## only predictions model ####################################################
+	######################################## only predictions model ####################################################
 
-	# df = pd.read_csv('data/datos_proyecto.csv', header=0)
-	# scaled, scaler = utils.normalize_data(df.values)
-	# n_features = scaled.shape[1]
-	# max_evals = 100
+	df = pd.read_csv('data/datos_liquidez_nuevos.csv', header=0, index_col=0)
+	df = df[['Merval', 'Spread', 'Valor transado (promedio)', 'LIX']]
+	scaled, scaler = utils.normalize_data(df.values)
+	n_features = scaled.shape[1]
+	max_evals = 100
 
-	# # hyper parameters
-	# batch_size = 64
-	# lr = 1e-3
-	# n_epochs = 150
-	# n_hidden = 30
-	# n_lags = 30
+	# hyper parameters
+	batch_size = 64
+	lr = 1e-3
+	n_epochs = 150
+	n_hidden = 30
+	n_lags = 30
 
-	# # best = utils.bayes_optimization(max_evals, scaled, n_features, scaler)
-	# # batch_size, lr, n_epochs, n_hidden, n_lags = int(best['batch_size']), best['lr'], int(best['n_epochs']), int(best['n_hidden']), int(best['n_lags'])
+	# best = utils.bayes_optimization(max_evals, scaled, n_features, scaler)
+	# batch_size, lr, n_epochs, n_hidden, n_lags = int(best['batch_size']), best['lr'], int(best['n_epochs']), int(best['n_hidden']), int(best['n_lags'])
 
-	# train_X, val_X, test_X, train_y, val_y, test_y = utils.split_data(scaled, n_lags, n_features)
+	train_X, val_X, test_X, train_y, val_y, test_y = utils.split_data(scaled, n_lags, n_features)
 
-	# start = time.time()
+	start = time.time()
 
-	# model = modelos.Model_predictor(lr, n_hidden, n_lags, n_features, scaler)
-	# model.train(train_X, val_X, train_y, val_y, batch_size, n_epochs)
-	# preds_train = model.predict(train_X)
-	# preds_val = model.predict(val_X)
-	# preds_test = model.predict(test_X)
+	model = modelos.Model_predictor(lr, n_hidden, n_lags, n_features, scaler)
+	model.train(train_X, val_X, train_y, val_y, batch_size, n_epochs)
 
-	# print('predictor mdoel finished in: ', time.time()-start, ' seconds')
+	print('predictor model finished in: ', time.time()-start, ' seconds')
 
-	# rmse_train, y_hat_train, y_trainset = model.eval(train_X, train_y)
-	# rmse_val, y_hat_val, y_valset = model.eval(val_X, val_y)
-	# rmse, y_hat, y = model.eval(test_X, test_y)
+	rmse, y_hat, y = model.eval(test_X, test_y)
 
-	# run_time = time.time() - start
+	run_time = time.time() - start
 	
-	# # print results
-	# print('rmse: %f' % rmse, 'run_time: %f' % run_time)
+	# print results
+	print('rmse: %f' % rmse, 'run_time: %f' % run_time)
 
-	# # plot results
-	# plt.plot(y, label='observations')
-	# plt.plot(y_hat, label='predictions')
-	# plt.suptitle('Predictions vs observations')
-	# plt.legend()
-	# plt.show()
+	# plot results
+	plt.plot(y_hat, label='predictions')
+	plt.plot(y, label='observations')
+	plt.suptitle('Predictions vs observations')
+	plt.legend()
+	plt.show()
 
 
 
@@ -60,9 +56,8 @@ if __name__ == '__main__':
 
 	from q_learning_models import Model
 
-	df = pd.read_csv('data/datos_liquidez_nuevos.csv', header=0, index_col=0)#, nrows=300)
+	df = pd.read_csv('data/datos_liquidez_nuevos.csv', header=0, index_col=0)
 	df = df[['Merval', 'Spread', 'Valor transado (promedio)', 'LIX']]
-	# df = df.loc[:1250, :]
 
 	scaled, scaler = utils.normalize_data(df.values)
 
