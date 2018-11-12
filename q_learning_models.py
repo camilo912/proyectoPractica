@@ -38,15 +38,19 @@ class Model():
 
 		self.model = Sequential()
 		#self.model.add(LSTM(n_hidden, input_shape=(n_lags, n_features+1), return_sequences=True))
+		#self.model.add(Dense(n_hidden, activation='tanh'))
 		#self.model.add(Dropout(0.5))
 		#self.model.add(LSTM(n_hidden, return_sequences=True))
+		#self.model.add(Dense(n_hidden, activation='tanh'))
+		#self.model.add(Dropout(0.8))
+		#self.model.add(LSTM(n_hidden))
+		self.model.add(LSTM(n_classes))
 		#self.model.add(Dropout(0.5))
-		self.model.add(LSTM(n_hidden))
+		#self.model.add(Dense(n_hidden, activation='tanh'))
 		#self.model.add(Dropout(0.5))
-		self.model.add(Dense(n_hidden, activation='tanh'))
-		#self.model.add(Dropout(0.5))
-		self.model.add(Dense(n_hidden, activation='tanh'))
-		self.model.add(Dense(n_classes))
+		#self.model.add(Dense(n_hidden, activation='tanh'))
+		#self.model.add(Dense(n_hidden, activation='tanh'))
+		#self.model.add(Dense(n_classes))
 
 		# self.model = Sequential()
 		# #self.model.add(Flatten())
@@ -167,7 +171,7 @@ class Model():
 				# q = rewards[i, action] + gamma*(max(self.future_model.model.predict(np.expand_dims(next_state, axis=0)).ravel()))
 				# double q learning
 				q = rewards[i, action] + gamma*(self.future_model.model.predict(np.expand_dims(next_state, axis=0)).ravel()[np.argmax(self.model.predict(np.expand_dims(next_state, axis=0)).ravel())])
-				#if(action != state[-1, 0]): q -= np.abs(q*0.1)
+				# if(action != state[-1, 0]): q -= np.abs(q*0.1)
 				target[action] = q
 				self.model.fit(np.expand_dims(state, axis=0), np.expand_dims(target, axis=0), epochs=1, verbose=0)
 
@@ -185,10 +189,6 @@ class Model():
 			# self.model.save_weights('models_and_weights_saved/model_weights.h5')
 			self.model.save('models_and_weights_saved/model.h5')
 		return preds
-
-
-	# def set_weights(self, weights):
-	# 	self.model.set_weights(weights)
 
 	def choose_action(self, state, explore):
 		# make predictions
