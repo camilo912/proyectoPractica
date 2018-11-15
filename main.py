@@ -23,6 +23,7 @@ if __name__ == '__main__':
 	n_hidden = 30
 	n_lags = 30
 
+	# optimización bayesiana
 	# best = utils.bayes_optimization(max_evals, scaled, n_features, scaler)
 	# batch_size, lr, n_epochs, n_hidden, n_lags = int(best['batch_size']), best['lr'], int(best['n_epochs']), int(best['n_hidden']), int(best['n_lags'])
 
@@ -58,6 +59,7 @@ if __name__ == '__main__':
 
 	df = pd.read_csv('data/datos_liquidez_nuevos.csv', header=0, index_col=0)
 	df = df[['Merval', 'Spread', 'Valor transado (promedio)', 'LIX']]
+	df2 = pd.read_csv('data/resultados_investigacion_empresa.csv', header=0, index_col=0)
 
 	scaled, scaler = utils.normalize_data(df.values)
 
@@ -106,6 +108,7 @@ if __name__ == '__main__':
 
 	plt.plot(historic_reward_total, label='algorithm reward')
 	plt.plot(historic_buy_and_hold_reward_total, label='buy and hold reward')
+	plt.plot(df2['capital'].values, label='research\'s team strategy')
 	plt.legend()
 	plt.show()
 
